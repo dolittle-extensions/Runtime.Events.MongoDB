@@ -15,6 +15,10 @@
     <ProjectReference Include="../Source/Runtime.Events.Store.MongoDB.csproj" />
   </ItemGroup>
 
+ <ItemGroup>
+    <PackageReference Include="Dolittle.Applications" Version="2.0.0-*" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Mongo2Go" Version="2.2.4" />
     <PackageReference Include="MongoDB.Bson" Version="2.7.0" />

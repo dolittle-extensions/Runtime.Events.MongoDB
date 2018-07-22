@@ -123,7 +123,7 @@ namespace Dolittle.Runtime.Events.Store.Specs
 
         public static IApplicationArtifactIdentifier ToArtifact(this IEvent @event)
         {
-            return _event_artifacts.GetOrAdd(@event.GetType(),new Mock<IApplicationArtifactIdentifier>().Object);
+            return _event_artifacts.GetOrAdd(@event.GetType(),given.an_event_store.event_source_artifact);
         }
 
         public static EventEnvelope ToNewEnvelope(this EventEnvelope envelope, VersionedEventSource versionedEventSource, DateTimeOffset committed, CorrelationId correlationId)
