@@ -8,7 +8,6 @@
   
   <ItemGroup>
     <PackageReference  Include="Dolittle.Runtime.Events.Store" Version="2.0.0-*" />
-    <PackageReference  Include="Dolittle.Concepts" Version="2.0.0-*" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MongoDB.Bson" Version="2.7.0"/>

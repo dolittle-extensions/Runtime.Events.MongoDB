@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Bson.Serialization;
+using Dolittle.Applications;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
 {
@@ -24,9 +25,10 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
         private string _updateJSCommand ="function (x){ return insert_commit(x);}";
 
-        public EventStore(IMongoDatabase database)
+        public EventStore(IMongoDatabase database, IApplicationArtifactIdentifierStringConverter converter)
         {
             _database = database;
+            _converter = converter;
             Bootstrap();
         }
 
@@ -70,7 +72,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
         public CommittedEventStream Commit(UncommittedEventStream uncommittedEvents)
         {
-            var commit = uncommittedEvents.AsBsonCommit();
+            var commit = uncommittedEvents.AsBsonCommit(_converter);
             return Do<CommittedEventStream>(() => {
                 try
                 {
@@ -130,6 +132,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
         #region IDisposable Support
         protected bool disposedValue = false; // To detect redundant calls
+        private readonly IApplicationArtifactIdentifierStringConverter _converter;
 
         protected virtual void Dispose(bool disposing)
         {
@@ -199,7 +202,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             var commits = new List<CommittedEventStream>();
             foreach(var doc in docs)
             {
-                commits.Add(doc.ToCommittedEventStream());
+                commits.Add(doc.ToCommittedEventStream(_converter));
             } 
             return new CommittedEvents(commits);
         } 

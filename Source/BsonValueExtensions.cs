@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Dolittle.Applications;
 using Dolittle.Dynamic;
 using MongoDB.Bson;
 
@@ -56,14 +57,14 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// Converts a <see cref="BsonValue" /> into an <see cref="EventStream" />
         /// </summary>
         /// <param name="value">The <see cref="BsonValue" /></param>
+        /// <param name="converter">An <see cref="IApplicationArtifactIdentifierStringConverter" /> to handle deserialization of <see cref="IApplicationArtifactIdentifier" /></param>
         /// <returns>The corresponding <see cref="EventStream" /></returns>
-        public static EventStream ToEventStream(this BsonValue value)
+        public static EventStream ToEventStream(this BsonValue value, IApplicationArtifactIdentifierStringConverter converter)
         {
             var list = new List<EventEnvelope>();
             foreach(var val in value.AsBsonArray)
             {
-                //Console.WriteLine(val.AsBsonDocument.ToJson());
-                list.Add(val.AsBsonDocument.ToEventEnvelope());
+                list.Add(val.AsBsonDocument.ToEventEnvelope(converter));
             }
             return new EventStream(list);
         }
