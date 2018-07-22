@@ -1,6 +1,6 @@
 [submodule "Build"]
 	path = Build
 	url = https://github.com/dolittle/DotNET.Build.git
-[submodule "Specifications/Specifications/Specs"]
-	path = Specifications/Specifications/Specs
+[submodule "Specifications/Specs"]
+	path = Specifications/Specs
 	url = https://github.com/dolittle/Runtime.Events.Store.Specs.git

@@ -73,7 +73,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         public static EventMetadata ToEventMetadata(this BsonDocument doc)
         {
             var correlationId = doc[Constants.CORRELATION_ID].AsGuid;
-            var event_artifact = doc[EventConstants.EVENT_ARTIFACT].AsGuid;
+            var event_artifact = doc[EventConstants.EVENT_ARTIFACT].AsString;
             var generation = doc[Constants.GENERATION].ToUint();
             var causedBy = doc[EventConstants.CAUSED_BY].AsString;
             var occurred = doc[EventConstants.OCCURRED].AsDateTimeOffset();
