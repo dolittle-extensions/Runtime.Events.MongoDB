@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Runtime.Events.Store.MongoDB", "Source\Runtime.Events.Store.MongoDB.csproj", "{E937BFDC-2287-4810-B601-A442D77E08C7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Runtime.Events.Store.Specs", "Specifications\Runtime.Events.Store.Specs.csproj", "{26132056-DF8E-4FC7-BAD1-1FF1161B606C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,17 @@ Global
 		{E937BFDC-2287-4810-B601-A442D77E08C7}.Release|x64.Build.0 = Release|Any CPU
 		{E937BFDC-2287-4810-B601-A442D77E08C7}.Release|x86.ActiveCfg = Release|Any CPU
 		{E937BFDC-2287-4810-B601-A442D77E08C7}.Release|x86.Build.0 = Release|Any CPU
+		{26132056-DF8E-4FC7-BAD1-1FF1161B606C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26132056-DF8E-4FC7-BAD1-1FF1161B606C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26132056-DF8E-4FC7-BAD1-1FF1161B606C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{26132056-DF8E-4FC7-BAD1-1FF1161B606C}.Debug|x64.Build.0 = Debug|Any CPU
+		{26132056-DF8E-4FC7-BAD1-1FF1161B606C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{26132056-DF8E-4FC7-BAD1-1FF1161B606C}.Debug|x86.Build.0 = Debug|Any CPU
+		{26132056-DF8E-4FC7-BAD1-1FF1161B606C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26132056-DF8E-4FC7-BAD1-1FF1161B606C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26132056-DF8E-4FC7-BAD1-1FF1161B606C}.Release|x64.ActiveCfg = Release|Any CPU
+		{26132056-DF8E-4FC7-BAD1-1FF1161B606C}.Release|x64.Build.0 = Release|Any CPU
+		{26132056-DF8E-4FC7-BAD1-1FF1161B606C}.Release|x86.ActiveCfg = Release|Any CPU
+		{26132056-DF8E-4FC7-BAD1-1FF1161B606C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
