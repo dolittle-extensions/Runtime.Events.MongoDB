@@ -25,10 +25,9 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
         private string _updateJSCommand ="function (x){ return insert_commit(x);}";
 
-        public EventStore(IMongoDatabase database, IApplicationArtifactIdentifierStringConverter converter)
+        public EventStore(IMongoDatabase database)
         {
             _database = database;
-            _converter = converter;
             Bootstrap();
         }
 
@@ -72,7 +71,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
         public CommittedEventStream Commit(UncommittedEventStream uncommittedEvents)
         {
-            var commit = uncommittedEvents.AsBsonCommit(_converter);
+            var commit = uncommittedEvents.AsBsonCommit();
             return Do<CommittedEventStream>(() => {
                 try
                 {
@@ -132,7 +131,6 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
         #region IDisposable Support
         protected bool disposedValue = false; // To detect redundant calls
-        private readonly IApplicationArtifactIdentifierStringConverter _converter;
 
         protected virtual void Dispose(bool disposing)
         {
@@ -202,7 +200,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             var commits = new List<CommittedEventStream>();
             foreach(var doc in docs)
             {
-                commits.Add(doc.ToCommittedEventStream(_converter));
+                commits.Add(doc.ToCommittedEventStream());
             } 
             return new CommittedEvents(commits);
         } 
