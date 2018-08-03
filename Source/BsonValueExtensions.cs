@@ -9,7 +9,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 {
 
     /// <summary>
-    /// Extensions to convert <see cref="BsonValue">s into domain specific types and dotnet types
+    /// Extensions to convert <see cref="BsonValue">Bson Values</see> into domain specific types and dotnet types
     /// </summary>
     public static class BsonValueExtensions 
     {
