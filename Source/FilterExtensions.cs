@@ -59,7 +59,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// <summary>
         /// Builds a <see cref="FilterDefinition{BsonDocument}" /> corresponding to the <see cref="VersionedEventSource" /> supplied
         /// </summary>
-        /// <param name="commit">A <see cref="VersionedEventSource" /></param>
+        /// <param name="version">A <see cref="VersionedEventSource" /></param>
         /// <returns>A <see cref="FilterDefinition{BsonDocument}" /> corresponding to the <see cref="VersionedEventSource" /></returns>
         public static FilterDefinition<BsonDocument> ToFilter(this VersionedEventSource version)
         {

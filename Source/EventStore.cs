@@ -11,11 +11,23 @@ using Dolittle.Applications;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
 {
+    /// <summary>
+    /// MongoDB implementation of <see cref="IEventStore" />
+    /// </summary>
     public class EventStore : IEventStore
     {
-        public object lock_object = new object();
+        object lock_object = new object();
+        /// <summary>
+        /// Name of the Commits collection
+        /// </summary>
         public const string COMMITS = "commits"; 
+        /// <summary>
+        /// Name of the Versions collection
+        /// </summary>
         public const string VERSIONS = "versions";
+        /// <summary>
+        /// Name of the Snapshots collection
+        /// </summary>
         public const string SNAPSHOTS = "shapshots";
 
         private IMongoDatabase _database;
@@ -25,10 +37,13 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
         private string _updateJSCommand ="function (x){ return insert_commit(x);}";
 
-        public EventStore(IMongoDatabase database, IApplicationArtifactIdentifierStringConverter converter)
+        /// <summary>
+        /// Instantiates an instance of the EventStore
+        /// </summary>
+        /// <param name="database">The mongodb instance that has the Event Store</param>
+        public EventStore(IMongoDatabase database)
         {
             _database = database;
-            _converter = converter;
             Bootstrap();
         }
 
@@ -70,9 +85,10 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
         private IMongoCollection<BsonDocument> Commits => _database.GetCollection<BsonDocument>(COMMITS, _commitSettings);
 
+        /// <inheritdoc />
         public CommittedEventStream Commit(UncommittedEventStream uncommittedEvents)
         {
-            var commit = uncommittedEvents.AsBsonCommit(_converter);
+            var commit = uncommittedEvents.AsBsonCommit();
             return Do<CommittedEventStream>(() => {
                 try
                 {
@@ -115,25 +131,34 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             return result.AsBsonDocument;
         }
 
+        /// <inheritdoc />
         public CommittedEvents Fetch(EventSourceId eventSourceId)
         {
            return FindCommitsWithSorting(eventSourceId.ToFilter()); 
         }
 
+        /// <inheritdoc />
         public CommittedEvents FetchFrom(EventSourceId eventSourceId, CommitVersion commitVersion)
         {
             return FindCommitsWithSorting(eventSourceId.ToFilter() & commitVersion.ToFilter());
         }
 
+        /// <inheritdoc />
         public CommittedEvents FetchAllCommitsAfter(CommitSequenceNumber commit)
         {
             return FindCommitsWithSorting(commit.ToFilter());
         }
 
         #region IDisposable Support
-        protected bool disposedValue = false; // To detect redundant calls
-        private readonly IApplicationArtifactIdentifierStringConverter _converter;
+        /// <summary>
+        /// Disposed flag to detect redundant calls
+        /// </summary>
+        protected bool disposedValue = false; 
 
+        /// <summary>
+        /// Disposes of managed and unmanaged resources
+        /// </summary>
+        /// <param name="disposing"></param>
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
@@ -157,6 +182,10 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         // }
 
         // This code added to correctly implement the disposable pattern.
+
+        /// <summary>
+        /// Disposes of the EventStore
+        /// </summary>
         public void Dispose()
         {
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
@@ -166,7 +195,12 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         }
         #endregion
 
-
+        /// <summary>
+        /// Helper function to perform an action and return the results
+        /// </summary>
+        /// <param name="callback">Action to be performed</param>
+        /// <typeparam name="T">The type of the return value</typeparam>
+        /// <returns>Instance of T</returns>
         protected virtual T Do<T>(Func<T> callback)
         {
             T results = default(T);
@@ -174,6 +208,10 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             return results;
         }
 
+        /// <summary>
+        /// Wraps up calling the MongoDB to deal with common error scenarios.
+        /// </summary>
+        /// <param name="callback"></param>
         protected virtual void Do(Action callback)
         {
             if (disposedValue)
@@ -202,7 +240,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             var commits = new List<CommittedEventStream>();
             foreach(var doc in docs)
             {
-                commits.Add(doc.ToCommittedEventStream(_converter));
+                commits.Add(doc.ToCommittedEventStream());
             } 
             return new CommittedEvents(commits);
         } 

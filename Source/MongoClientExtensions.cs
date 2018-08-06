@@ -20,6 +20,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// </summary>
         /// <param name="database">MongoDb Database to execute the javascript</param>
         /// <param name="javascript">Javascript to execute</param>
+        /// <param name="args">Optional arguments that can be provided to the javascript function to execute</param>
         /// <returns>A <see cref="BsonValue" /> result</returns>
         public static BsonValue Eval(this IMongoDatabase database, string javascript, IEnumerable<BsonValue> args = null)
         {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Dolittle.Applications;
-using Dolittle.Dynamic;
+using Dolittle.PropertyBags;
 using MongoDB.Bson;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
@@ -16,9 +16,8 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// Converts an <see cref="UncommittedEventStream" /> into its <see cref="BsonDocument" /> representation
         /// </summary>
         /// <param name="uncommittedEvents">The <see cref="UncommittedEventStream" /></param>
-        /// <param name="converter">An <see cref="IApplicationArtifactIdentifierStringConverter" /> to handle serialization of <see cref="IApplicationArtifactIdentifier" /></param>
         /// <returns>A <see cref="BsonDocument" /> representation of the <see cref="UncommittedEventStream" /></returns>
-        public static BsonDocument AsBsonCommit(this UncommittedEventStream uncommittedEvents, IApplicationArtifactIdentifierStringConverter converter)
+        public static BsonDocument AsBsonCommit(this UncommittedEventStream uncommittedEvents)
         {
             var eventDocs = uncommittedEvents.Events.Select(e => 
             {
@@ -26,9 +25,9 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                 {
                     { Constants.ID, e.Id.Value },
                     { Constants.CORRELATION_ID, e.Metadata.CorrelationId.Value },
-                    { EventConstants.EVENT_ARTIFACT, converter.AsString(e.Metadata.ArtifactGeneration.Artifact) },
-                    { Constants.GENERATION, e.Metadata.ArtifactGeneration.Generation.Value },
-                    { Constants.EVENT_SOURCE_ARTIFACT, converter.AsString(uncommittedEvents.Source.Artifact) },
+                    { EventConstants.EVENT_ARTIFACT, e.Metadata.Artifact.Id.Value },
+                    { Constants.GENERATION, e.Metadata.Artifact.Generation.Value },
+                    { Constants.EVENT_SOURCE_ARTIFACT, uncommittedEvents.Source.Artifact.Value },
                     { Constants.EVENTSOURCE_ID, e.Metadata.EventSourceId.Value },
                     { EventConstants.CAUSED_BY, e.Metadata.CausedBy.Value ?? string.Empty },
                     { VersionConstants.COMMIT, e.Metadata.VersionedEventSource.Version.Commit},
@@ -45,7 +44,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                 { CommitConstants.COMMIT_ID, uncommittedEvents.Id.Value },
                 { CommitConstants.TIMESTAMP, uncommittedEvents.Timestamp.ToUnixTimeMilliseconds() },
                 { Constants.EVENTSOURCE_ID, uncommittedEvents.Source.EventSource.Value },
-                { Constants.EVENT_SOURCE_ARTIFACT, converter.AsString(uncommittedEvents.Source.Artifact) },
+                { Constants.EVENT_SOURCE_ARTIFACT, uncommittedEvents.Source.Artifact.Value },
                 { VersionConstants.COMMIT, uncommittedEvents.Source.Version.Commit},
                 { VersionConstants.SEQUENCE, uncommittedEvents.Source.Version.Sequence},
                 { CommitConstants.EVENTS, new BsonArray(eventDocs) },     

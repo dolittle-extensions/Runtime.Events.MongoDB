@@ -4,6 +4,7 @@ using System.Linq;
 using Dolittle.Dynamic;
 using MongoDB.Bson;
 using Dolittle.Applications;
+using Dolittle.Artifacts;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
 {
@@ -55,59 +56,55 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// Converts a <see cref="BsonDocument" /> representation into a <see cref="CommittedEventStream" />
         /// </summary>
         /// <param name="doc">The <see cref="BsonDocument" /> representation</param>
-        /// <param name="converter">An <see cref="IApplicationArtifactIdentifierStringConverter" /> to handle deserialization of <see cref="IApplicationArtifactIdentifier" /></param>
         /// <returns>A <see cref="CommittedEventStream" /> corresponding to the <see cref="BsonDocument" /> representation</returns>
-        public static CommittedEventStream ToCommittedEventStream(this BsonDocument doc, IApplicationArtifactIdentifierStringConverter converter)
+        public static CommittedEventStream ToCommittedEventStream(this BsonDocument doc)
         {
             return new CommittedEventStream(doc[Constants.ID].ToUlong(),
-                                            doc.ToVersionedEventSource(converter),
+                                            doc.ToVersionedEventSource(),
                                             doc[CommitConstants.COMMIT_ID].ToCommitId(),
                                             doc[Constants.CORRELATION_ID].AsGuid,
                                             doc[CommitConstants.TIMESTAMP].AsDateTimeOffset(),
-                                            doc[CommitConstants.EVENTS].ToEventStream(converter));
+                                            doc[CommitConstants.EVENTS].ToEventStream());
         }
 
         /// <summary>
         /// Converts a <see cref="BsonDocument" /> representation into an <see cref="EventMetadata" />
         /// </summary>
         /// <param name="doc">The <see cref="BsonDocument" /> representation</param>
-        /// <param name="converter">An <see cref="IApplicationArtifactIdentifierStringConverter" /> to handle deserialization of <see cref="IApplicationArtifactIdentifier" /></param>
         /// <returns>An <see cref="EventMetadata" /> instance corresponding to the <see cref="BsonDocument" /> representation</returns>
-        public static EventMetadata ToEventMetadata(this BsonDocument doc, IApplicationArtifactIdentifierStringConverter converter)
+        public static EventMetadata ToEventMetadata(this BsonDocument doc)
         {
             var correlationId = doc[Constants.CORRELATION_ID].AsGuid;
-            var event_artifact = doc[EventConstants.EVENT_ARTIFACT].AsString;
-            var generation = doc[Constants.GENERATION].ToUint();
+            var event_artifact = doc[EventConstants.EVENT_ARTIFACT].AsGuid;
+            var generation = doc[Constants.GENERATION].AsInt32;
             var causedBy = doc[EventConstants.CAUSED_BY].AsString;
             var occurred = doc[EventConstants.OCCURRED].AsDateTimeOffset();
-            return new EventMetadata(doc.ToVersionedEventSource(converter),correlationId,new ArtifactGeneration(converter.FromString(event_artifact),generation),causedBy,occurred);
+            return new EventMetadata(doc.ToVersionedEventSource(),correlationId,new Artifact(event_artifact,generation),causedBy,occurred);
         }
 
         /// <summary>
         /// Converts a <see cref="BsonDocument" /> representation into an <see cref="VersionedEventSource" />
         /// </summary>
         /// <param name="doc">The <see cref="BsonDocument" /> representation</param>
-        /// <param name="converter">An <see cref="IApplicationArtifactIdentifierStringConverter" /> to handle deserialization of <see cref="IApplicationArtifactIdentifier" /></param>
         /// <returns>A <see cref="VersionedEventSource" /> instance corresponding to the <see cref="BsonDocument" /> representation</returns>
-        public static VersionedEventSource ToVersionedEventSource(this BsonDocument doc, IApplicationArtifactIdentifierStringConverter converter)
+        public static VersionedEventSource ToVersionedEventSource(this BsonDocument doc)
         {
-            var artifact = doc[Constants.EVENT_SOURCE_ARTIFACT].AsString;
+            var artifact = doc[Constants.EVENT_SOURCE_ARTIFACT].AsGuid;
             var eventSourceId = doc[Constants.EVENTSOURCE_ID].AsGuid;
             var major = doc[VersionConstants.COMMIT].ToUlong();
             var minor = doc[VersionConstants.SEQUENCE].ToUint();
-            return new VersionedEventSource(new EventSourceVersion(major,minor),eventSourceId,converter.FromString(artifact));
+            return new VersionedEventSource(new EventSourceVersion(major,minor),eventSourceId,artifact);
         }
 
         /// <summary>
         /// Converts a <see cref="BsonDocument" /> representation into an <see cref="EventEnvelope" />
         /// </summary>
         /// <param name="doc">The <see cref="BsonDocument" /> representation</param>
-        /// <param name="converter">An <see cref="IApplicationArtifactIdentifierStringConverter" /> to handle deserialization of <see cref="IApplicationArtifactIdentifier" /></param>
         /// <returns>An <see cref="EventEnvelope" /> instance corresponding to the <see cref="BsonDocument" /> representation</returns>
-        public static EventEnvelope ToEventEnvelope(this BsonDocument doc, IApplicationArtifactIdentifierStringConverter converter)
+        public static EventEnvelope ToEventEnvelope(this BsonDocument doc)
         {
             var eventDoc = doc[EventConstants.EVENT].AsBsonDocument;
-           return new EventEnvelope(doc[Constants.ID].AsGuid,doc.ToEventMetadata(converter),eventDoc.ToPropertyBag());
+           return new EventEnvelope(doc[Constants.ID].AsGuid,doc.ToEventMetadata(),eventDoc.ToPropertyBag());
         }
     }
 }
