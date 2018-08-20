@@ -1,5 +1,6 @@
 using MongoDB.Driver;
 using MongoDB.Bson;
+using Dolittle.Artifacts;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
 {
@@ -52,7 +53,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         public static FilterDefinition<BsonDocument> ToFilter(this CommitSequenceNumber commit)
         {
             var builder = Builders<BsonDocument>.Filter;                   
-            var filter = builder.Gte(Constants.ID, commit.Value);
+            var filter = builder.Gt(Constants.ID, commit.Value);
             return filter;
         }
 
@@ -66,6 +67,18 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             var builder = Builders<BsonDocument>.Filter;                   
             var filter = builder.Eq(Constants.EVENTSOURCE_ID, version.EventSource.Value) & 
                             builder.Eq(VersionConstants.COMMIT, version.Version.Commit);
+            return filter;
+        }
+
+        /// <summary>
+        /// Builds a <see cref="FilterDefinition{BsonDocument}" /> corresponding to the <see cref="ArtifactId" /> supplied
+        /// </summary>
+        /// <param name="eventType">An <see cref="ArtifactId" /> of an event type</param>
+        /// <returns>A <see cref="FilterDefinition{BsonDocument}" /> corresponding to the <see cref="ArtifactId" /></returns>
+        public static FilterDefinition<BsonDocument> ToFilter(this ArtifactId eventType)
+        {
+            var builder = Builders<BsonDocument>.Filter;                   
+            var filter = builder.Eq(Constants.QUERY_EVENT_ARTIFACT, eventType.Value);
             return filter;
         }
     }

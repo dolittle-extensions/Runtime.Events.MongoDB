@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Bson.Serialization;
-using Dolittle.Applications;
+using Dolittle.Artifacts;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
 {
@@ -234,9 +234,11 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
         CommittedEvents FindCommitsWithSorting(FilterDefinition<BsonDocument> filter)
         {
+            //Console.WriteLine(filter.AsBson().ToJson());
             var builder = Builders<BsonDocument>.Sort;
             var sort = builder.Ascending(Constants.VERSION);
             var docs = Commits.Find(filter).Sort(sort).ToList();
+            //docs.ForEach(d => Console.WriteLine(d.ToJson()));
             var commits = new List<CommittedEventStream>();
             foreach(var doc in docs)
             {
@@ -244,5 +246,35 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             } 
             return new CommittedEvents(commits);
         } 
+
+        /// <inheritdoc />
+        public SingleEventTypeEventStream FetchAllEventsOfType(ArtifactId artifactId)
+        {
+            var commits = FindCommitsWithSorting(artifactId.ToFilter());
+            return GetEventsFromCommits(commits, artifactId);
+        }
+
+        /// <inheritdoc />
+        public SingleEventTypeEventStream FetchAllEventsOfTypeAfter(ArtifactId artifactId, CommitSequenceNumber commitSequenceNumber)
+        {
+            var commits = FindCommitsWithSorting(commitSequenceNumber.ToFilter() & artifactId.ToFilter());
+            return GetEventsFromCommits(commits, artifactId);
+        }
+
+        /// <inheritdoc />
+        public EventSourceVersion GetVersionFor(EventSourceId eventSource)
+        {
+            return null;
+        }
+
+         SingleEventTypeEventStream GetEventsFromCommits(IEnumerable<CommittedEventStream> commits, ArtifactId eventType)
+         {
+            var events = new List<CommittedEventEnvelope>();
+            foreach(var commit in commits)
+            {
+                events.AddRange(commit.Events.FilteredByEventType(eventType).Select(e => new CommittedEventEnvelope(commit.Sequence,e.Id,e.Metadata,e.Event)));
+            }
+            return new SingleEventTypeEventStream(events);
+         }
     }
 }
