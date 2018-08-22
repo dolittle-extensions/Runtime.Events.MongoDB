@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Dolittle.Applications;
 using Dolittle.PropertyBags;
+using MongoDB.Driver;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
 {
@@ -81,6 +83,18 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                 { Constants.EVENTSOURCE_ID,eventSourceId.Value }
             });
         }
-    }
 
+        /// <summary>
+        /// Converts a <see cref="FilterDefinition{T}"/> into its <see cref="BsonDocument" /> representation
+        /// </summary>
+        /// <param name="filter">The <see cref="FilterDefinition{T}"/></param>
+        /// <typeparam name="T">type of the filter definition</typeparam>
+        /// <returns>A <see cref="BsonDocument" /> representation of the <see cref="FilterDefinition{T}" /></returns>
+        public static BsonDocument AsBson<T>(this FilterDefinition<T> filter)
+        {
+            var serializerRegistry = BsonSerializer.SerializerRegistry;
+            var documentSerializer = serializerRegistry.GetSerializer<T>();
+            return filter.Render(documentSerializer, serializerRegistry);
+        }
+    }
 }

@@ -7,7 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Bson.Serialization;
-using Dolittle.Applications;
+using Dolittle.Artifacts;
+using Dolittle.Logging;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
 {
@@ -34,6 +35,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         private MongoCollectionSettings _commitSettings;
         private MongoCollectionSettings _versionSettings;
         private MongoCollectionSettings _snapshotSettings;
+        private ILogger _logger;
 
         private string _updateJSCommand ="function (x){ return insert_commit(x);}";
 
@@ -41,9 +43,11 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// Instantiates an instance of the EventStore
         /// </summary>
         /// <param name="database">The mongodb instance that has the Event Store</param>
-        public EventStore(IMongoDatabase database)
+        /// <param name="logger">An <see cref="ILogger"/> instance to log significant events</param>
+        public EventStore(IMongoDatabase database, ILogger logger)
         {
             _database = database;
+            _logger = logger;
             Bootstrap();
         }
 
@@ -84,6 +88,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         }
 
         private IMongoCollection<BsonDocument> Commits => _database.GetCollection<BsonDocument>(COMMITS, _commitSettings);
+        private IMongoCollection<BsonDocument> Versions => _database.GetCollection<BsonDocument>(VERSIONS, _versionSettings);
 
         /// <inheritdoc />
         public CommittedEventStream Commit(UncommittedEventStream uncommittedEvents)
@@ -95,7 +100,9 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                     var result = ExecuteCommit(commit);
                     if(result.IsSuccessfulCommit()){
                         var sequence_number =  result[Constants.ID].ToUlong();
-                        return uncommittedEvents.ToCommitted(sequence_number);
+                        var committed = uncommittedEvents.ToCommitted(sequence_number);
+                        UpdateVersion(committed.Source);
+                        return committed;
                     } else if(result.IsKnownError()){
                         if(result.IsPreviousVersion()){
                             throw new EventSourceConcurrencyConflict($"Current Version is {result["version"]}, tried to commit {uncommittedEvents.Source.Version.Commit}");
@@ -110,7 +117,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                     }
                 } catch(Exception ex)
                 {
-                    Console.WriteLine(ex.ToString());
+                    _logger.Error(ex,"Exception committing event stream");
                     throw;
                 }
             });
@@ -244,5 +251,68 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             } 
             return new CommittedEvents(commits);
         } 
+
+        /// <inheritdoc />
+        public SingleEventTypeEventStream FetchAllEventsOfType(ArtifactId artifactId)
+        {
+            var commits = FindCommitsWithSorting(artifactId.ToFilter());
+            return GetEventsFromCommits(commits, artifactId);
+        }
+
+        /// <inheritdoc />
+        public SingleEventTypeEventStream FetchAllEventsOfTypeAfter(ArtifactId artifactId, CommitSequenceNumber commitSequenceNumber)
+        {
+            var commits = FindCommitsWithSorting(commitSequenceNumber.ToFilter() & artifactId.ToFilter());
+            return GetEventsFromCommits(commits, artifactId);
+        }
+
+        /// <inheritdoc />
+        public EventSourceVersion GetVersionFor(EventSourceId eventSource)
+        {
+            var version = Versions.Find(eventSource.ToFilter()).SingleOrDefault();
+            if(version == null)
+                return EventSourceVersion.Initial();
+            
+            return version.ToEventSourceVersion();
+        }
+
+        SingleEventTypeEventStream GetEventsFromCommits(IEnumerable<CommittedEventStream> commits, ArtifactId eventType)
+        {
+            var events = new List<CommittedEventEnvelope>();
+            foreach(var commit in commits)
+            {
+                events.AddRange(commit.Events.FilteredByEventType(eventType).Select(e => new CommittedEventEnvelope(commit.Sequence,e.Id,e.Metadata,e.Event)));
+            }
+            return new SingleEventTypeEventStream(events);
+        }
+
+        private void UpdateVersion(VersionedEventSource version)
+        {
+            if (version != null)
+            {
+                Task.Factory.StartNew(() => UpdateVersionAsync(version));
+            }
+        }
+
+        Task UpdateVersionAsync(VersionedEventSource version)
+        {
+            try
+            {
+                var versionBson = version.AsBsonVersion();
+                versionBson.Add(Constants.ID, version.EventSource.Value);
+                var result = Versions.ReplaceOne(version.EventSource.ToFilter(),versionBson,new UpdateOptions { IsUpsert = true });
+                return Task.FromResult(0);
+            }
+            catch (OutOfMemoryException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                //Swallowing the exception for now but this could cause a problem for our "stateless" 
+                _logger.Error(ex,"Exception updating version collection to latest version");
+                return Task.FromResult(0);
+            }
+        }
     }
 }

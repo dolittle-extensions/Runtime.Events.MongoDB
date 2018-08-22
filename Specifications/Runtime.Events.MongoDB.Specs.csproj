@@ -7,16 +7,16 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <AssemblyName>Dolittle.Runtime.Events.Store.MongoDB.Specs</AssemblyName>
-    <RootNamespace>Dolittle.Runtime.Events.Store.MongoDB.Specs</RootNamespace>
+    <AssemblyName>Dolittle.Runtime.Events.MongoDB.Specs</AssemblyName>
+    <RootNamespace>Dolittle.Runtime.Events.MongoDB.Specs</RootNamespace>
   </PropertyGroup>
   
   <ItemGroup>
-    <ProjectReference Include="../Source/Runtime.Events.Store.MongoDB.csproj" />
+    <ProjectReference Include="../Source/Runtime.Events.MongoDB.csproj" />
   </ItemGroup>
 
  <ItemGroup>
-    <PackageReference Include="Dolittle.Applications" Version="2.0.0-*" />
+    <PackageReference Include="Dolittle.Artifacts" Version="2.0.0-*" />
   </ItemGroup>
 
   <ItemGroup>

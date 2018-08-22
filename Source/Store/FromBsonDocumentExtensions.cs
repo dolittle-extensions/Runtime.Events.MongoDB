@@ -97,6 +97,18 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         }
 
         /// <summary>
+        /// Converts a <see cref="BsonDocument" /> representation into an <see cref="EventSourceVersion" />
+        /// </summary>
+        /// <param name="doc">The <see cref="BsonDocument" /> representation</param>
+        /// <returns>A <see cref="EventSourceVersion" /> instance corresponding to the <see cref="BsonDocument" /> representation</returns>
+        public static EventSourceVersion ToEventSourceVersion(this BsonDocument doc)
+        {
+            var major = doc[VersionConstants.COMMIT].ToUlong();
+            var minor = doc[VersionConstants.SEQUENCE].ToUint();
+            return new EventSourceVersion(major,minor);
+        }
+
+        /// <summary>
         /// Converts a <see cref="BsonDocument" /> representation into an <see cref="EventEnvelope" />
         /// </summary>
         /// <param name="doc">The <see cref="BsonDocument" /> representation</param>

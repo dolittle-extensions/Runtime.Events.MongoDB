@@ -8,6 +8,7 @@ using Mongo2Go;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using Dolittle.Applications;
+using Dolittle.Logging;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB.Specs
 {
@@ -15,7 +16,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Specs
     public class test_mongodb_event_store : EventStore
     {
         private readonly a_mongo_db _database_runner;
-        public test_mongodb_event_store(a_mongo_db database_runner): base(database_runner.Database)
+        public test_mongodb_event_store(a_mongo_db database_runner, ILogger logger): base(database_runner.Database, logger)
         {
             _database_runner = database_runner;
         }
