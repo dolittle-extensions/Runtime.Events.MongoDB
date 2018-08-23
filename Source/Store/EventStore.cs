@@ -271,7 +271,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         {
             var version = Versions.Find(eventSource.ToFilter()).SingleOrDefault();
             if(version == null)
-                return EventSourceVersion.Initial();
+                return EventSourceVersion.Initial;
             
             return version.ToEventSourceVersion();
         }
