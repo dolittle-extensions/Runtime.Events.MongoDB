@@ -24,5 +24,7 @@ namespace Dolittle.Runtime.Events.Store.Specs.when_committing_event_streams
         Because of = () => event_store._do((es) => exception = Catch.Exception(() => es.Commit(uncommitted_events)));
 
         It fails_as_the_commit_is_a_duplicate = () => exception.ShouldBeOfExactType<CommitIsADuplicate>();
+
+        Cleanup nh = () => event_store.Dispose();
     }
 }
