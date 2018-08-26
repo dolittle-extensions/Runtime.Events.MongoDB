@@ -22,8 +22,10 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Specs
         }
         protected override void Dispose(bool disposing)
         {
+            Console.WriteLine($"The value of disposedValue is: {disposedValue}");
             if (!disposedValue)
             {
+                Console.WriteLine($"Disposing");
                 _database_runner.Dispose();
                 disposedValue = true;
             }
