@@ -38,6 +38,7 @@ namespace Dolittle.Runtime.Events.Store.Specs.when_committing_event_streams
         };
         It should_have_the_correct_versioned_event_source = () => committed_events.Source.ShouldEqual(ahead_uncommitted_events.Source);
         It should_have_a_sequence_id = () => committed_events.Sequence.ShouldEqual(new CommitSequenceNumber(1));
+        
         Cleanup nh = () => event_store.Dispose();
     }
 }

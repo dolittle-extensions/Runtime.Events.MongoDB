@@ -28,5 +28,7 @@ namespace Dolittle.Runtime.Events.Store.Specs.when_committing_event_streams
         Because of = () => event_store._do((es) => exception = Catch.Exception(() => es.Commit(behind_uncommitted_events)));
 
         It fails_as_the_commit_has_a_concurrency_conflict = () => exception.ShouldBeOfExactType<EventSourceConcurrencyConflict>();
+        
+        Cleanup nh = () => event_store.Dispose();
     }
 }
