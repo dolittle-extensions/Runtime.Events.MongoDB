@@ -266,13 +266,19 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         }
 
         /// <inheritdoc />
-        public EventSourceVersion GetVersionFor(EventSourceId eventSource)
+        public EventSourceVersion GetCurrentVersionFor(EventSourceId eventSource)
         {
             var version = Versions.Find(eventSource.ToFilter()).SingleOrDefault();
             if(version == null)
-                return EventSourceVersion.Initial;
+                return EventSourceVersion.NoVersion;
             
             return version.ToEventSourceVersion();
+        }
+
+        /// <inheritdoc />
+        public EventSourceVersion GetNextVersionFor(EventSourceId eventSource)
+        {
+            return GetCurrentVersionFor(eventSource).NextCommit();
         }
 
         SingleEventTypeEventStream GetEventsFromCommits(IEnumerable<CommittedEventStream> commits, ArtifactId eventType)
