@@ -53,7 +53,6 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
         void Bootstrap()
         {
-            //BsonSerializer.RegisterSerializer(typeof(DateTime), new DateTimeSerializer(DateTimeKind.Utc, BsonType.Document));
             _commitSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Acknowledged };
             _versionSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Unacknowledged };
             _snapshotSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Unacknowledged };
@@ -139,19 +138,19 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         }
 
         /// <inheritdoc />
-        public CommittedEvents Fetch(EventSourceId eventSourceId)
+        public Commits Fetch(EventSourceId eventSourceId)
         {
            return FindCommitsWithSorting(eventSourceId.ToFilter()); 
         }
 
         /// <inheritdoc />
-        public CommittedEvents FetchFrom(EventSourceId eventSourceId, CommitVersion commitVersion)
+        public Commits FetchFrom(EventSourceId eventSourceId, CommitVersion commitVersion)
         {
             return FindCommitsWithSorting(eventSourceId.ToFilter() & commitVersion.ToFilter());
         }
 
         /// <inheritdoc />
-        public CommittedEvents FetchAllCommitsAfter(CommitSequenceNumber commit)
+        public Commits FetchAllCommitsAfter(CommitSequenceNumber commit)
         {
             return FindCommitsWithSorting(commit.ToFilter());
         }
@@ -239,7 +238,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             }
         }
 
-        CommittedEvents FindCommitsWithSorting(FilterDefinition<BsonDocument> filter)
+        Commits FindCommitsWithSorting(FilterDefinition<BsonDocument> filter)
         {
             var builder = Builders<BsonDocument>.Sort;
             var sort = builder.Ascending(Constants.VERSION);
@@ -249,7 +248,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             {
                 commits.Add(doc.ToCommittedEventStream());
             } 
-            return new CommittedEvents(commits);
+            return new Commits(commits);
         } 
 
         /// <inheritdoc />
@@ -267,13 +266,19 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         }
 
         /// <inheritdoc />
-        public EventSourceVersion GetVersionFor(EventSourceId eventSource)
+        public EventSourceVersion GetCurrentVersionFor(EventSourceId eventSource)
         {
             var version = Versions.Find(eventSource.ToFilter()).SingleOrDefault();
             if(version == null)
-                return EventSourceVersion.Initial();
+                return EventSourceVersion.NoVersion;
             
             return version.ToEventSourceVersion();
+        }
+
+        /// <inheritdoc />
+        public EventSourceVersion GetNextVersionFor(EventSourceId eventSource)
+        {
+            return GetCurrentVersionFor(eventSource).NextCommit();
         }
 
         SingleEventTypeEventStream GetEventsFromCommits(IEnumerable<CommittedEventStream> commits, ArtifactId eventType)
