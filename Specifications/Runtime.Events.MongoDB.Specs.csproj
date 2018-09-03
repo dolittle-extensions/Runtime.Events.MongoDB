@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../specs.props"></Import>
+  <Import Project="../Build/MSBuild/specs.props"></Import>
 
   <ItemGroup>
     <Compile Include="./Specs/**/*.cs" Exclude="./Specs/obj/**/*.cs;./Specs/bin/**/*.cs"/>
