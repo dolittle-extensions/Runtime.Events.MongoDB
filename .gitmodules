@@ -4,3 +4,6 @@
 [submodule "Specifications/Store/Specs"]
 	path = Specifications/Store/Specs
 	url = https://github.com/dolittle/Runtime.Events.Store.Specs.git
+[submodule "Specifications/Processing/Specs"]
+	path = Specifications/Processing/Specs
+	url = git@github.com:dolittle/Runtime.Events.Processing.Specs.git

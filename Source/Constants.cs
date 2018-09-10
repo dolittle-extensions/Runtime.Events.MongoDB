@@ -1,6 +1,7 @@
 using Dolittle.Runtime.Events.Store;
+using Dolittle.Runtime.Events.Store.MongoDB;
 
-namespace Dolittle.Runtime.Events.Store.MongoDB
+namespace Dolittle.Runtime.Events.MongoDB
 {
     /// <summary>
     /// Generic Constants for use within the <see cref="IEventStore" />
@@ -12,6 +13,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         public const string VERSION = "version"; 
         public const string MAJOR_VERSION = "major"; 
         public const string MINOR_VERSION = "minor"; 
+        public const string REVISION = "revision"; 
         public const string GENERATION = "generation";
         public const string EVENT_SOURCE_ARTIFACT = "event_source_artifact";
         public const string ID = "_id";
@@ -65,16 +67,16 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         var result;
         while (true) {{
             var newer_version;
-            db.{EventStore.COMMITS}.find( {{ eventsource_id: commit.eventsource_id, commit: {{ $gte: commit.commit }} }} ).sort({{commit:-1}}).limit(1).forEach(v => newer_version = v);
+            db.{Dolittle.Runtime.Events.Store.MongoDB.EventStore.COMMITS}.find( {{ eventsource_id: commit.eventsource_id, commit: {{ $gte: commit.commit }} }} ).sort({{commit:-1}}).limit(1).forEach(v => newer_version = v);
             if(newer_version){{
                 result = {{ err: {{ {VersionConstants.COMMIT}:newer_version.commit }} }};
                 break;
             }}
 
-            var cursor = db.{EventStore.COMMITS}.find({{}}, {{ _id: 1 }} ).sort( {{ _id: -1 }} ).limit(1);
+            var cursor = db.{Dolittle.Runtime.Events.Store.MongoDB.EventStore.COMMITS}.find({{}}, {{ _id: 1 }} ).sort( {{ _id: -1 }} ).limit(1);
             var seq = cursor.hasNext() ? cursor.next()._id + 1 : 1;
             commit._id = NumberLong(seq);
-            db.{EventStore.COMMITS}.insert(commit);
+            db.{Dolittle.Runtime.Events.Store.MongoDB.EventStore.COMMITS}.insert(commit);
             var err = db.getLastErrorObj();
             if(err && err.code) {{
                 if(err.code == 11000 && err.err.indexOf('$_id_') != -1 ){{

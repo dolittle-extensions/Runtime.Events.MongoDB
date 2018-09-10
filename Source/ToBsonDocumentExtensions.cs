@@ -6,8 +6,10 @@ using Dolittle.PropertyBags;
 using MongoDB.Driver;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using Dolittle.Runtime.Events.Store;
+using Dolittle.Runtime.Events.Processing;
 
-namespace Dolittle.Runtime.Events.Store.MongoDB
+namespace Dolittle.Runtime.Events.MongoDB
 {
     /// <summary>
     /// Extensions to convert various classes into their <see cref="BsonDocument" /> representation
@@ -71,18 +73,45 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         }
 
         /// <summary>
+        /// Converts a <see cref="CommittedEventVersion" /> into its <see cref="BsonDocument" /> representation
+        /// </summary>
+        /// <param name="version">The <see cref="CommittedEventVersion" /></param>
+        /// <returns>A <see cref="BsonDocument" /> representation of the <see cref="CommittedEventVersion" /></returns>
+        public static BsonDocument AsBson(this CommittedEventVersion version )
+        {
+            return new BsonDocument( new Dictionary<string,object>
+            {
+                { Constants.MAJOR_VERSION, version.Major },
+                { Constants.MINOR_VERSION, version.Minor },
+                { Constants.REVISION, version.Revision }
+            });
+        }
+
+        /// <summary>
         /// Converts a <see cref="EventSourceId" /> into its <see cref="BsonDocument" /> representation
         /// </summary>
         /// <param name="eventSourceId">The <see cref="EventSourceId" /></param>
         /// <returns>A <see cref="BsonDocument" /> representation of the <see cref="EventSourceId" /></returns>
         public static BsonDocument AsBson(this EventSourceId eventSourceId )
         {
-            //expand to hold reference to snapshot, maybe event count for a snapshotting process
             return new BsonDocument( new Dictionary<string,object>
             {
                 { Constants.EVENTSOURCE_ID,eventSourceId.Value }
             });
         }
+
+        /// <summary>
+        /// Converts an <see cref="EventProcessorId" /> into its <see cref="BsonDocument" /> representation
+        /// </summary>
+        /// <param name="id">The <see cref="EventProcessorId" /></param>
+        /// <returns>A <see cref="BsonDocument" /> representation of the <see cref="EventProcessorId" /></returns>
+        public static BsonDocument AsBson(this EventProcessorId id )
+        {
+            return new BsonDocument( new Dictionary<string,object>
+            {
+                { Constants.ID, id.Value }
+            });
+        }        
 
         /// <summary>
         /// Converts a <see cref="FilterDefinition{T}"/> into its <see cref="BsonDocument" /> representation

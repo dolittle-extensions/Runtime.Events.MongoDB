@@ -1,14 +1,13 @@
 using System;
-using System.Linq;
 using Dolittle.Logging;
-using Dolittle.Runtime.Events.Store.Specs;
-using Dolittle.Applications;
-using Moq;
 using Dolittle.Runtime.Events.MongoDB.Specs;
+using Dolittle.Runtime.Events.Processing;
+using Dolittle.Runtime.Events.Processing.InMemory.Specs;
+using Moq;
 
-namespace Dolittle.Runtime.Events.Store.MongoDB.Specs
+namespace Dolittle.Runtime.Events.Processing.MongoDB.Specs
 {
-    public class SUTProvider : IProvideTheEventStore
+    public class SUTProvider : IProvideTheOffsetRepository
     {
         ILogger _logger;
 
@@ -22,6 +21,6 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Specs
             _logger = logger_mock.Object;
         }
 
-        public IEventStore Build() => new test_mongodb_event_store(new a_mongo_db(),_logger);
+        public IEventProcessorOffsetRepository Build() => new test_mongodb_offset_repository(new a_mongo_db(),_logger);
     }
 }
