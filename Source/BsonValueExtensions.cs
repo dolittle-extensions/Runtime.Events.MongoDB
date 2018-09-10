@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dolittle.Applications;
+using Dolittle.Collections;
 using Dolittle.PropertyBags;
+using Dolittle.Runtime.Events.Store;
 using MongoDB.Bson;
 
-namespace Dolittle.Runtime.Events.Store.MongoDB
+namespace Dolittle.Runtime.Events.MongoDB
 {
 
     /// <summary>
@@ -76,7 +78,13 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         public static PropertyBag ToPropertyBag(this BsonValue value)
         {
             var bsonAsDictionary = value.AsBsonDocument.ToDictionary();
-            var propertyBag = new PropertyBag(bsonAsDictionary);
+            var nonNullDictionary = new NullFreeDictionary<string,object>();
+            bsonAsDictionary.ForEach(kvp =>
+            {
+                if(kvp.Value != null)
+                    nonNullDictionary.Add(kvp);
+            });
+            var propertyBag = new PropertyBag(nonNullDictionary);
             return propertyBag;
         }
     }

@@ -9,6 +9,7 @@ using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Bson.Serialization;
 using Dolittle.Artifacts;
 using Dolittle.Logging;
+using Dolittle.Runtime.Events.MongoDB;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
 {

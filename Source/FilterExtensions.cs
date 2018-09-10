@@ -1,8 +1,10 @@
 using MongoDB.Driver;
 using MongoDB.Bson;
 using Dolittle.Artifacts;
+using Dolittle.Runtime.Events.Store;
+using Dolittle.Runtime.Events.Processing;
 
-namespace Dolittle.Runtime.Events.Store.MongoDB
+namespace Dolittle.Runtime.Events.MongoDB
 {
     /// <summary>
     /// Extensions for converting to a <see cref="FilterDefinition{BsonDocument}" />
@@ -54,6 +56,18 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         {
             var builder = Builders<BsonDocument>.Filter;                   
             var filter = builder.Gt(Constants.ID, commit.Value);
+            return filter;
+        }
+
+        /// <summary>
+        /// Builds a <see cref="FilterDefinition{BsonDocument}" /> corresponding to the <see cref="EventProcessorId" /> supplied
+        /// </summary>
+        /// <param name="id">A <see cref="EventProcessorId" /></param>
+        /// <returns>A <see cref="FilterDefinition{BsonDocument}" /> corresponding to the <see cref="EventProcessorId" /></returns>
+        public static FilterDefinition<BsonDocument> ToFilter(this EventProcessorId id)
+        {
+            var builder = Builders<BsonDocument>.Filter;                   
+            var filter = builder.Eq(Constants.ID, id.Value);
             return filter;
         }
 
