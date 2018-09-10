@@ -6,4 +6,7 @@
 	url = https://github.com/dolittle/Runtime.Events.Store.Specs.git
 [submodule "Specifications/Processing/Specs"]
 	path = Specifications/Processing/Specs
-	url = https://github.com:/olittle/Runtime.Events.Processing.Specs.git
+	url = https://github.com/dolittle/Runtime.Events.Processing.Specs.git
+[submodule "Specifications/Processing/Specs"]
+	path = Specifications/Processing/Specs
+	url = https://github.com/dolittle/Runtime.Events.Processing.Specs.git
