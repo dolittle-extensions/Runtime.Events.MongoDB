@@ -5,8 +5,9 @@ using Dolittle.Dynamic;
 using MongoDB.Bson;
 using Dolittle.Applications;
 using Dolittle.Artifacts;
+using Dolittle.Runtime.Events.Store;
 
-namespace Dolittle.Runtime.Events.Store.MongoDB
+namespace Dolittle.Runtime.Events.MongoDB
 {
     /// <summary>
     /// Converts <see cref="BsonDocument" /> representations back into the original type and allows information to be easily extracted from the document
@@ -106,6 +107,19 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             var major = doc[VersionConstants.COMMIT].ToUlong();
             var minor = doc[VersionConstants.SEQUENCE].ToUint();
             return new EventSourceVersion(major,minor);
+        }
+
+        /// <summary>
+        /// Converts a <see cref="BsonDocument" /> representation into an <see cref="EventSourceVersion" />
+        /// </summary>
+        /// <param name="doc">The <see cref="BsonDocument" /> representation</param>
+        /// <returns>A <see cref="EventSourceVersion" /> instance corresponding to the <see cref="BsonDocument" /> representation</returns>
+        public static CommittedEventVersion ToCommittedEventVersion(this BsonDocument doc)
+        {
+            var major = doc[Constants.MAJOR_VERSION].ToUlong();
+            var minor = doc[Constants.MINOR_VERSION].ToUlong();
+            var revision = doc[Constants.REVISION].ToUint();
+            return new CommittedEventVersion(major,minor,revision);
         }
 
         /// <summary>

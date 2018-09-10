@@ -8,7 +8,7 @@ using Mongo2Go;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
-namespace Dolittle.Runtime.Events.Store.MongoDB.Specs
+namespace Dolittle.Runtime.Events.MongoDB.Specs
 {
     public class a_mongo_db : IDisposable
     {
@@ -18,7 +18,6 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Specs
         public a_mongo_db()
         {
             _runner = MongoDbRunner.Start();
-            Console.WriteLine("Created mongo instance: " + _runner.GetHashCode() + " " + _databaseName);
             var client = new MongoClient(_runner.ConnectionString);
             Database = client.GetDatabase(_databaseName);
             
@@ -39,7 +38,6 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Specs
         public void Dispose()
         {
             Database.Client.DropDatabase(_databaseName);
-            Console.WriteLine("Disposing of mongo instance: " + _runner.GetHashCode());
             _runner.Dispose();
         }
     }
