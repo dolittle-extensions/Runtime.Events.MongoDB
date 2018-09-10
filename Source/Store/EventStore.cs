@@ -10,15 +10,16 @@ using MongoDB.Bson.Serialization;
 using Dolittle.Artifacts;
 using Dolittle.Logging;
 using Dolittle.Runtime.Events.MongoDB;
+using Dolittle.Lifecycle;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
 {
     /// <summary>
-    /// MongoDB implementation of <see cref="IEventStore" />
+    /// 
     /// </summary>
-    public class EventStore : IEventStore
+    [SingletonPerTenant]
+    public class EventStoreConfig 
     {
-        object lock_object = new object();
         /// <summary>
         /// Name of the Commits collection
         /// </summary>
@@ -38,14 +39,19 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         private MongoCollectionSettings _snapshotSettings;
         private ILogger _logger;
 
-        private string _updateJSCommand ="function (x){ return insert_commit(x);}";
+        /// <summary>
+        /// MongoDB command text for inserting a commit
+        /// </summary>
+        /// <returns></returns>
+        public  string UpdateJSCommand => "function (x){ return insert_commit(x);}";
+        private bool _isConfigured = false;
 
         /// <summary>
         /// Instantiates an instance of the EventStore
         /// </summary>
         /// <param name="database">The mongodb instance that has the Event Store</param>
         /// <param name="logger">An <see cref="ILogger"/> instance to log significant events</param>
-        public EventStore(IMongoDatabase database, ILogger logger)
+        public EventStoreConfig(IMongoDatabase database, ILogger logger)
         {
             _database = database;
             _logger = logger;
@@ -54,11 +60,16 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
         void Bootstrap()
         {
-            _commitSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Acknowledged };
-            _versionSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Unacknowledged };
-            _snapshotSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Unacknowledged };
-            CreateIndexes();
-            CreateUpdateScript();
+            if(!_isConfigured)
+            {
+                _commitSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Acknowledged };
+                _versionSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Unacknowledged };
+                _snapshotSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Unacknowledged };
+                CreateIndexes();
+                CreateUpdateScript();
+                _isConfigured = true;
+            }
+
         }
 
         private void CreateUpdateScript()
@@ -87,8 +98,40 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             CreateIndexesForCommits();
         }
 
-        private IMongoCollection<BsonDocument> Commits => _database.GetCollection<BsonDocument>(COMMITS, _commitSettings);
-        private IMongoCollection<BsonDocument> Versions => _database.GetCollection<BsonDocument>(VERSIONS, _versionSettings);
+        /// <summary>
+        /// Access to the IMongoCollection{BsonDocument} representing the Commits
+        /// </summary>
+        /// <returns><see cref="IMongoCollection{BsonDocument}"/> representing the Commits"</returns>
+        public IMongoCollection<BsonDocument> Commits => _database.GetCollection<BsonDocument>(COMMITS, _commitSettings);
+        /// <summary>
+        /// Access to the IMongoCollection{BsonDocument} representing the Versions
+        /// </summary>
+        /// <returns><see cref="IMongoCollection{BsonDocument}"/> representing the Versions"</returns>
+        public IMongoCollection<BsonDocument> Versions => _database.GetCollection<BsonDocument>(VERSIONS, _versionSettings);
+
+    }
+
+
+    /// <summary>
+    /// MongoDB implementation of <see cref="IEventStore" />
+    /// </summary>
+    public class EventStore : IEventStore
+    {
+        object lock_object = new object();
+
+        private readonly EventStoreConfig _config;
+        private readonly ILogger _logger;
+
+        /// <summary>
+        /// Instantiates an instance of the EventStore
+        /// </summary>
+        /// <param name="config">A mongodb instance with associated configuration</param>
+        /// <param name="logger">An <see cref="ILogger"/> instance to log significant events</param>
+        public EventStore(EventStoreConfig config, ILogger logger)
+        {
+            _config = config;
+            _logger = logger;
+        }
 
         /// <inheritdoc />
         public CommittedEventStream Commit(UncommittedEventStream uncommittedEvents)
@@ -125,13 +168,13 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
         private bool IsDuplicateCommit(CommitId commit)
         {
-            var doc = Commits.Find(commit.ToFilter()).SingleOrDefault();
+            var doc = _config.Commits.Find(commit.ToFilter()).SingleOrDefault();
             return doc != null;
         }
 
         BsonDocument ExecuteCommit(BsonDocument commit)
         {
-            var result = Commits.Database.Eval(_updateJSCommand, new BsonValue[]{ commit });
+            var result = _config.Commits.Database.Eval(_config.UpdateJSCommand, new BsonValue[]{ commit });
             
             if(result == null)
                 throw new Exception("The error response is not in the format of a Bson Document.  Cannot process."); //use custom exception
@@ -243,7 +286,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         {
             var builder = Builders<BsonDocument>.Sort;
             var sort = builder.Ascending(Constants.VERSION);
-            var docs = Commits.Find(filter).Sort(sort).ToList();
+            var docs = _config.Commits.Find(filter).Sort(sort).ToList();
             var commits = new List<CommittedEventStream>();
             foreach(var doc in docs)
             {
@@ -269,7 +312,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// <inheritdoc />
         public EventSourceVersion GetCurrentVersionFor(EventSourceId eventSource)
         {
-            var version = Versions.Find(eventSource.ToFilter()).SingleOrDefault();
+            var version = _config.Versions.Find(eventSource.ToFilter()).SingleOrDefault();
             if(version == null)
                 return EventSourceVersion.NoVersion;
             
@@ -306,7 +349,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             {
                 var versionBson = version.AsBsonVersion();
                 versionBson.Add(Constants.ID, version.EventSource.Value);
-                var result = Versions.ReplaceOne(version.EventSource.ToFilter(),versionBson,new UpdateOptions { IsUpsert = true });
+                var result = _config.Versions.ReplaceOne(version.EventSource.ToFilter(),versionBson,new UpdateOptions { IsUpsert = true });
                 return Task.FromResult(0);
             }
             catch (OutOfMemoryException)
