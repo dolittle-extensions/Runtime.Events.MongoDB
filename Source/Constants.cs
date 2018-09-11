@@ -67,16 +67,16 @@ namespace Dolittle.Runtime.Events.MongoDB
         var result;
         while (true) {{
             var newer_version;
-            db.{Dolittle.Runtime.Events.Store.MongoDB.EventStore.COMMITS}.find( {{ eventsource_id: commit.eventsource_id, commit: {{ $gte: commit.commit }} }} ).sort({{commit:-1}}).limit(1).forEach(v => newer_version = v);
+            db.{EventStoreConfig.COMMITS}.find( {{ eventsource_id: commit.eventsource_id, commit: {{ $gte: commit.commit }} }} ).sort({{commit:-1}}).limit(1).forEach(v => newer_version = v);
             if(newer_version){{
                 result = {{ err: {{ {VersionConstants.COMMIT}:newer_version.commit }} }};
                 break;
             }}
 
-            var cursor = db.{Dolittle.Runtime.Events.Store.MongoDB.EventStore.COMMITS}.find({{}}, {{ _id: 1 }} ).sort( {{ _id: -1 }} ).limit(1);
+            var cursor = db.{EventStoreConfig.COMMITS}.find({{}}, {{ _id: 1 }} ).sort( {{ _id: -1 }} ).limit(1);
             var seq = cursor.hasNext() ? cursor.next()._id + 1 : 1;
             commit._id = NumberLong(seq);
-            db.{Dolittle.Runtime.Events.Store.MongoDB.EventStore.COMMITS}.insert(commit);
+            db.{EventStoreConfig.COMMITS}.insert(commit);
             var err = db.getLastErrorObj();
             if(err && err.code) {{
                 if(err.code == 11000 && err.err.indexOf('$_id_') != -1 ){{
