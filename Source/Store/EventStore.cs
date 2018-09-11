@@ -11,6 +11,7 @@ using Dolittle.Artifacts;
 using Dolittle.Logging;
 using Dolittle.Runtime.Events.MongoDB;
 using Dolittle.Lifecycle;
+using Dolittle.Events;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
 {
@@ -147,6 +148,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                         UpdateVersion(committed.Source);
                         return committed;
                     } else if(result.IsKnownError()){
+                        ValidateVersionAgainstCommits(uncommittedEvents.Source.EventSource);
                         if(result.IsPreviousVersion()){
                             throw new EventSourceConcurrencyConflict($"Current Version is {result["version"]}, tried to commit {uncommittedEvents.Source.Version.Commit}");
                         }
@@ -164,6 +166,27 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                     throw;
                 }
             });
+        }
+
+        private void ValidateVersionAgainstCommits(EventSourceId eventSource)
+        {
+            var versionFromCommits = GetVersionFromCommits(eventSource);
+            var versionFromVersion = GetCurrentVersionFor(eventSource);
+            if(versionFromCommits.Version.CompareTo(versionFromVersion) > 0)
+            {
+                UpdateVersion(versionFromCommits);
+            }
+        }
+
+        private VersionedEventSource GetVersionFromCommits(EventSourceId eventSource)
+        {
+            var builder = Builders<BsonDocument>.Sort;
+            var sort = builder.Ascending(Constants.VERSION);
+            var commitDoc = _config.Commits.Find(eventSource.ToFilter()).Sort(sort).Limit(1).ToList().SingleOrDefault();
+            if(commitDoc == null)
+                return new VersionedEventSource(EventSourceVersion.NoVersion,eventSource,Guid.Empty);
+
+            return commitDoc.ToCommittedEventStream().Source;
         }
 
         private bool IsDuplicateCommit(CommitId commit)
@@ -335,32 +358,29 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             return new SingleEventTypeEventStream(events);
         }
 
-        private void UpdateVersion(VersionedEventSource version)
+        /// <summary>
+        /// Updates the Version of the <see cref="EventSource" />
+        /// </summary>
+        /// <param name="version">The version to update to</param>
+        protected void UpdateVersion(VersionedEventSource version)
         {
             if (version != null)
             {
-                Task.Factory.StartNew(() => UpdateVersionAsync(version));
-            }
-        }
-
-        Task UpdateVersionAsync(VersionedEventSource version)
-        {
-            try
-            {
-                var versionBson = version.AsBsonVersion();
-                versionBson.Add(Constants.ID, version.EventSource.Value);
-                var result = _config.Versions.ReplaceOne(version.EventSource.ToFilter(),versionBson,new UpdateOptions { IsUpsert = true });
-                return Task.FromResult(0);
-            }
-            catch (OutOfMemoryException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                //Swallowing the exception for now but this could cause a problem for our "stateless" 
-                _logger.Error(ex,"Exception updating version collection to latest version");
-                return Task.FromResult(0);
+                try
+                {
+                    var versionBson = version.AsBsonVersion();
+                    versionBson.Add(Constants.ID, version.EventSource.Value);
+                    var result = _config.Versions.ReplaceOne(version.EventSource.ToFilter(),versionBson,new UpdateOptions { IsUpsert = true });
+                }
+                catch (OutOfMemoryException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    //Swallowing the exception for now but this could cause a problem for our "stateless" 
+                    _logger.Error(ex,"Exception updating version collection to latest version");
+                }
             }
         }
     }
