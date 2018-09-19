@@ -75,12 +75,13 @@ namespace Dolittle.Runtime.Events.MongoDB
         /// <returns>An <see cref="EventMetadata" /> instance corresponding to the <see cref="BsonDocument" /> representation</returns>
         public static EventMetadata ToEventMetadata(this BsonDocument doc)
         {
+            var eventId = doc[Constants.ID].AsGuid;
             var correlationId = doc[Constants.CORRELATION_ID].AsGuid;
             var event_artifact = doc[EventConstants.EVENT_ARTIFACT].AsGuid;
             var generation = doc[Constants.GENERATION].AsInt32;
             var causedBy = doc[EventConstants.CAUSED_BY].AsString;
             var occurred = doc[EventConstants.OCCURRED].AsDateTimeOffset();
-            return new EventMetadata(doc.ToVersionedEventSource(),correlationId,new Artifact(event_artifact,generation),causedBy,occurred);
+            return new EventMetadata(eventId,doc.ToVersionedEventSource(),correlationId,new Artifact(event_artifact,generation),causedBy,occurred);
         }
 
         /// <summary>
@@ -130,7 +131,7 @@ namespace Dolittle.Runtime.Events.MongoDB
         public static EventEnvelope ToEventEnvelope(this BsonDocument doc)
         {
             var eventDoc = doc[EventConstants.EVENT].AsBsonDocument;
-           return new EventEnvelope(doc[Constants.ID].AsGuid,doc.ToEventMetadata(),eventDoc.ToPropertyBag());
+           return new EventEnvelope(doc.ToEventMetadata(),eventDoc.ToPropertyBag());
         }
     }
 }
