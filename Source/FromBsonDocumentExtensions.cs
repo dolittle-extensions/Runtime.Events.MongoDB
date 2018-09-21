@@ -79,9 +79,9 @@ namespace Dolittle.Runtime.Events.MongoDB
             var correlationId = doc[Constants.CORRELATION_ID].AsGuid;
             var event_artifact = doc[EventConstants.EVENT_ARTIFACT].AsGuid;
             var generation = doc[Constants.GENERATION].AsInt32;
-            var causedBy = doc[EventConstants.CAUSED_BY].AsString;
+            var origin = doc[EventConstants.ORIGINAL_CONTEXT].ToOriginalContext();
             var occurred = doc[EventConstants.OCCURRED].AsDateTimeOffset();
-            return new EventMetadata(eventId,doc.ToVersionedEventSource(),correlationId,new Artifact(event_artifact,generation),causedBy,occurred);
+            return new EventMetadata(eventId,doc.ToVersionedEventSource(),correlationId,new Artifact(event_artifact,generation),occurred, origin);
         }
 
         /// <summary>
