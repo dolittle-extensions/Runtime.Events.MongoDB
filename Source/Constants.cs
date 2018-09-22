@@ -43,12 +43,20 @@ namespace Dolittle.Runtime.Events.MongoDB
     public class EventConstants 
     {
         #pragma warning disable 1591
-        public const string CAUSED_BY = "caused_by";
+        public const string ORIGINAL_CONTEXT = "original_context";
         public const string OCCURRED = "occurred";
         public const string EVENT = "event";
         public const string SHA = "SHA";
-
         public const string EVENT_ARTIFACT = "event_artifact";
+        public const string APPLICATION = "application";
+        public const string BOUNDED_CONTEXT = "bounded_context";
+        public const string TENANT = "tenant";
+        public const string ENVIRONMENT = "environment";
+        public const string CLAIMS = "claims";
+        public const string CLAIM_NAME = "value";
+        public const string CLAIM_VALUE = "type";
+        public const string CLAIM_VALUE_TYPE = "value_type";
+
         #pragma warning disable 1591
     }
 

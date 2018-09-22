@@ -33,10 +33,10 @@ namespace Dolittle.Runtime.Events.MongoDB
                     { Constants.GENERATION, e.Metadata.Artifact.Generation.Value },
                     { Constants.EVENT_SOURCE_ARTIFACT, uncommittedEvents.Source.Artifact.Value },
                     { Constants.EVENTSOURCE_ID, e.Metadata.EventSourceId.Value },
-                    { EventConstants.CAUSED_BY, e.Metadata.CausedBy.Value ?? string.Empty },
                     { VersionConstants.COMMIT, e.Metadata.VersionedEventSource.Version.Commit},
                     { VersionConstants.SEQUENCE, e.Metadata.VersionedEventSource.Version.Sequence},
                     { EventConstants.OCCURRED, e.Metadata.Occurred.UtcTicks },
+                    { EventConstants.ORIGINAL_CONTEXT, e.Metadata.OriginalContext.AsBson()},
                     { EventConstants.EVENT, BsonDocumentWrapper.Create<PropertyBag>(e.Event) }
                 });
             });
@@ -124,6 +124,26 @@ namespace Dolittle.Runtime.Events.MongoDB
             var serializerRegistry = BsonSerializer.SerializerRegistry;
             var documentSerializer = serializerRegistry.GetSerializer<T>();
             return filter.Render(documentSerializer, serializerRegistry);
+        }
+
+        /// <summary>
+        /// Converts an <see cref="OriginalContext"/> into its <see cref="BsonDocument" /> representation
+        /// </summary>
+        /// <param name="originalContext">The <see cref="OriginalContext"/></param>
+        /// <returns>A <see cref="BsonDocument" /> representation of the <see cref="OriginalContext"/></returns>
+        public static BsonDocument AsBson(this OriginalContext originalContext)
+        {
+            var claims = new BsonArray();
+            claims.AddRange(originalContext.Claims.Select(_ => _.ToBsonDocument()));
+
+            return new BsonDocument( new Dictionary<string,object>
+            {
+                { EventConstants.APPLICATION, originalContext.Application.Value },
+                { EventConstants.BOUNDED_CONTEXT, originalContext.BoundedContext.Value },
+                { EventConstants.TENANT, originalContext.Tenant.Value },
+                { EventConstants.ENVIRONMENT, originalContext.Environment.Value },
+                { EventConstants.CLAIMS, claims }
+            });
         }
     }
 }
