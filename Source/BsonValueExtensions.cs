@@ -5,7 +5,9 @@ using Dolittle.Applications;
 using Dolittle.Collections;
 using Dolittle.PropertyBags;
 using Dolittle.Runtime.Events.Store;
+using Dolittle.Runtime.Events;
 using MongoDB.Bson;
+using Dolittle.Security;
 
 namespace Dolittle.Runtime.Events.MongoDB
 {
@@ -71,7 +73,7 @@ namespace Dolittle.Runtime.Events.MongoDB
         }
 
         /// <summary>
-        /// Converts a <see cref="BsonValue" /> into an <see cref="PropertyBag" />
+        /// Converts a <see cref="BsonValue" /> into a <see cref="PropertyBag" />
         /// </summary>
         /// <param name="value">The <see cref="BsonValue" /></param>
         /// <returns>The corresponding <see cref="PropertyBag" /></returns>        
@@ -86,6 +88,54 @@ namespace Dolittle.Runtime.Events.MongoDB
             });
             var propertyBag = new PropertyBag(nonNullDictionary);
             return propertyBag;
+        }
+
+        /// <summary>
+        /// Converts a <see cref="BsonValue" /> into an <see cref="OriginalContext" />
+        /// </summary>
+        /// <param name="value">The <see cref="BsonValue" /> that is the source</param>
+        /// <returns>An <see cref="OriginalContext" /> with the values from the <see cref="BsonValue" /></returns>
+        public static OriginalContext ToOriginalContext(this BsonValue value)
+        {
+            try
+            {
+                var doc = value.AsBsonDocument;
+                var application = doc[EventConstants.APPLICATION].AsGuid;
+                var boundedContext = doc[EventConstants.BOUNDED_CONTEXT].AsGuid;
+                var tenant = doc[EventConstants.TENANT].AsGuid;
+                var environment = doc[EventConstants.ENVIRONMENT].AsString;
+                var claims = doc[EventConstants.CLAIMS].AsBsonArray.ToClaims();
+                return new OriginalContext(application,boundedContext,tenant,environment,claims);
+            }
+            catch(Exception)
+            {
+                Console.WriteLine(value.ToJson());
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Converts a <see cref="BsonArray" /> into <see cref="Claims" />
+        /// </summary>
+        /// <param name="array">The <see cref="BsonArray" /> that is the source</param>
+        /// <returns><see cref="Claims" /> with the values from the <see cref="BsonArray" /></returns>
+        public static Claims ToClaims(this BsonArray array)
+        {
+            return new Claims(array.Select(_ => _.ToClaim()).ToList());
+        }
+
+        /// <summary>
+        /// Converts a <see cref="BsonValue" /> into a <see cref="Claim" />
+        /// </summary>
+        /// <param name="value">The <see cref="BsonValue" /> that is the source</param>
+        /// <returns><see cref="Claim" /> with the values from the <see cref="BsonValue" /></returns>
+        public static Claim ToClaim(this BsonValue value)
+        {
+            var doc = value.AsBsonDocument;
+            var name = doc[EventConstants.CLAIM_NAME].AsString;
+            var val = doc[EventConstants.CLAIM_VALUE].AsString;
+            var valueType = doc[EventConstants.CLAIM_VALUE_TYPE].AsString;
+            return new Claim(name, val, valueType);
         }
     }
 }
