@@ -20,6 +20,7 @@ namespace Dolittle.Runtime.Events.MongoDB
         public const string CORRELATION_ID = "correlation_id";
         public const string ERROR = "err";
         public const string QUERY_EVENT_ARTIFACT = "events.event_artifact";
+        public const string OFFSET = "offset";
         #pragma warning restore 1591
     }
 

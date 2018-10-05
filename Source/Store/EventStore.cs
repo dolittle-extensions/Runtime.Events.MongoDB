@@ -56,6 +56,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         {
             _database = database;
             _logger = logger;
+            _logger.Debug($"{database.DatabaseNamespace} {this.GetHashCode()}");
             Bootstrap();
         }
 
@@ -78,9 +79,27 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             var sys_functions = _database.GetCollection<BsonDocument>("system.js");
             var code = CommitConstants.INSERT_COMMIT;
             var commit_function_doc = new BsonDocument("value", new BsonJavaScript(code));
-            sys_functions.UpdateOne(Builders<BsonDocument>.Filter.Eq(Constants.ID,"insert_commit"),  
-                                        Builders<BsonDocument>.Update.Set("value", new BsonJavaScript(code)), 
-                                        new UpdateOptions{ IsUpsert = true });
+            try
+            {
+                
+                var insert_commit_function_doc = sys_functions.Find(Builders<BsonDocument>.Filter.Eq(Constants.ID,"insert_commit")).FirstOrDefault();
+                if(insert_commit_function_doc == null || insert_commit_function_doc["value"].ToString() != code)
+                {
+                    if(insert_commit_function_doc != null)
+                    {
+                        _logger.Debug($"Updating insert_commit DB: {insert_commit_function_doc["value"].ToString().Length} - {CommitConstants.INSERT_COMMIT.Length}");
+
+                    } 
+                    sys_functions.UpdateOne(Builders<BsonDocument>.Filter.Eq(Constants.ID,"insert_commit"),  
+                                                        Builders<BsonDocument>.Update.Set("value", new BsonJavaScript(code)), 
+                                                        new UpdateOptions{ IsUpsert = true });
+                }
+            } 
+            catch(Exception ex) 
+            {
+                _logger.Error(ex.ToString());
+            }
+            
         }
 
         private void CreateIndexesForCommits()
