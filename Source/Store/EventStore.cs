@@ -12,6 +12,7 @@ using Dolittle.Logging;
 using Dolittle.Runtime.Events.MongoDB;
 using Dolittle.Lifecycle;
 using Dolittle.Events;
+using Dolittle.Resources.Configuration;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
 {
@@ -50,13 +51,26 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// <summary>
         /// Instantiates an instance of the EventStore
         /// </summary>
-        /// <param name="database">The mongodb instance that has the Event Store</param>
+        /// <param name="configurationWrapper"></param>
         /// <param name="logger">An <see cref="ILogger"/> instance to log significant events</param>
-        public EventStoreConfig(IMongoDatabase database, ILogger logger)
+        public EventStoreConfig(IConfigurationFor<EventStoreConfiguration> configurationWrapper, ILogger logger)
         {
-            _database = database;
+            var config = configurationWrapper.Instance;
+            var s = MongoClientSettings.FromUrl(new MongoUrl(config.Host));
+            if (config.UseSSL)
+            {
+                s.UseSsl = true;
+                s.SslSettings = new SslSettings
+                {
+                    EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+                    CheckCertificateRevocation = false
+                };
+            }
+
+            var server = new MongoClient(s);
+            _database = server.GetDatabase(config.Database);
             _logger = logger;
-            _logger.Debug($"{database.DatabaseNamespace} {this.GetHashCode()}");
+            _logger.Debug($"{_database.DatabaseNamespace} {this.GetHashCode()}");
             Bootstrap();
         }
 
