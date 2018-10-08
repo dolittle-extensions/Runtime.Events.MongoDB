@@ -16,8 +16,8 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Specs
 
     public class test_mongodb_event_store : EventStore
     {
-        private readonly a_mongo_db _database_runner;
-        public test_mongodb_event_store(a_mongo_db database_runner, ILogger logger): base(new EventStoreConfig(database_runner.Database,logger), logger)
+        private readonly a_mongo_db_connection _database_runner;
+        public test_mongodb_event_store(a_mongo_db_connection database_runner, ILogger logger): base(new EventStoreMongoDBConfiguration(database_runner.Connection, logger), logger)
         {
             _database_runner = database_runner;
         }

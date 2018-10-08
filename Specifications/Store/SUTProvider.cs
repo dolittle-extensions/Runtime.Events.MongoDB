@@ -22,6 +22,6 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Specs
             _logger = logger_mock.Object;
         }
 
-        public IEventStore Build() => new test_mongodb_event_store(new a_mongo_db(),_logger);
+        public IEventStore Build() => new test_mongodb_event_store(new a_mongo_db_connection(),_logger);
     }
 }
