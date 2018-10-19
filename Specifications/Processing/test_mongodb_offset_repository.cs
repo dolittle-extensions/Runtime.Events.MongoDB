@@ -16,8 +16,8 @@ namespace Dolittle.Runtime.Events.Processing.MongoDB.Specs
 
     public class test_mongodb_offset_repository : EventProcessorOffsetRepository
     {
-        private readonly a_mongo_db _database_runner;
-        public test_mongodb_offset_repository(a_mongo_db database_runner, ILogger logger): base(database_runner.Database, logger)
+        private readonly a_mongo_db_connection _database_runner;
+        public test_mongodb_offset_repository(a_mongo_db_connection database_runner, ILogger logger): base(database_runner.Connection, logger)
         {
             _database_runner = database_runner;
         }

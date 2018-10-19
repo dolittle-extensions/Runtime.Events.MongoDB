@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Dolittle. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ * --------------------------------------------------------------------------------------------*/
+ 
 using Dolittle.Runtime.Events.Store;
 using Dolittle.Runtime.Events.Store.MongoDB;
 
@@ -76,16 +81,16 @@ namespace Dolittle.Runtime.Events.MongoDB
         var result;
         while (true) {{
             var newer_version;
-            db.{EventStoreConfig.COMMITS}.find( {{ eventsource_id: commit.eventsource_id, commit: {{ $gte: commit.commit }} }} ).sort({{commit:-1}}).limit(1).forEach(v => newer_version = v);
+            db.{EventStoreMongoDBConfiguration.COMMITS}.find( {{ eventsource_id: commit.eventsource_id, commit: {{ $gte: commit.commit }} }} ).sort({{commit:-1}}).limit(1).forEach(v => newer_version = v);
             if(newer_version){{
                 result = {{ err: {{ {VersionConstants.COMMIT}:newer_version.commit }} }};
                 break;
             }}
 
-            var cursor = db.{EventStoreConfig.COMMITS}.find({{}}, {{ _id: 1 }} ).sort( {{ _id: -1 }} ).limit(1);
+            var cursor = db.{EventStoreMongoDBConfiguration.COMMITS}.find({{}}, {{ _id: 1 }} ).sort( {{ _id: -1 }} ).limit(1);
             var seq = cursor.hasNext() ? cursor.next()._id + 1 : 1;
             commit._id = NumberLong(seq);
-            db.{EventStoreConfig.COMMITS}.insert(commit);
+            db.{EventStoreMongoDBConfiguration.COMMITS}.insert(commit);
             var err = db.getLastErrorObj();
             if(err && err.code) {{
                 if(err.code == 11000 && err.err.indexOf('$_id_') != -1 ){{

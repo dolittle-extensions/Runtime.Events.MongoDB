@@ -20,11 +20,12 @@ namespace Dolittle.Runtime.Events.Processing.MongoDB
     /// </summary>
     public class EventProcessorOffsetRepository : IEventProcessorOffsetRepository
     {
-        object lock_object = new object();
         /// <summary>
         /// Name of the Offsets collection
         /// </summary>
         public const string OFFSETS = "offsets"; 
+
+        object lock_object = new object();
 
         private IMongoDatabase _database;
         private MongoCollectionSettings _offsetsSettings;
@@ -33,26 +34,19 @@ namespace Dolittle.Runtime.Events.Processing.MongoDB
         /// <summary>
         /// Instantiates an instance of <see cref="EventProcessorOffsetRepository" />
         /// </summary>
-        /// <param name="database">A MongoDB instance</param>
+        /// <param name="connection">The connection for the <see cref="IMongoDatabase"/></param>
         /// <param name="logger">A logger instance</param>
-        public EventProcessorOffsetRepository(IMongoDatabase database, ILogger logger)
+        public EventProcessorOffsetRepository(Connection connection, ILogger logger)
         {
-            _database = database;
+            _database = connection.Database;
             _logger = logger;
             Bootstrap();
         }
 
-        void Bootstrap()
-        {
-            _offsetsSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Acknowledged };
-        }
-
-        private IMongoCollection<BsonDocument> Offsets => _database.GetCollection<BsonDocument>(OFFSETS, _offsetsSettings);
-
         /// <inheritdoc />
         public CommittedEventVersion Get(EventProcessorId eventProcessorId)
         {
-            var version = Offsets.Find(eventProcessorId.ToFilter()).SingleOrDefault();
+            var version = _offsets.Find(eventProcessorId.ToFilter()).SingleOrDefault();
             if(version == null)
                 return CommittedEventVersion.None;
             
@@ -64,7 +58,13 @@ namespace Dolittle.Runtime.Events.Processing.MongoDB
         {
             var versionBson = committedEventVersion.AsBson();
             versionBson.Add(Constants.ID, eventProcessorId.Value);
-            Offsets.ReplaceOne(eventProcessorId.ToFilter(),versionBson,new UpdateOptions { IsUpsert = true });
+            _offsets.ReplaceOne(eventProcessorId.ToFilter(),versionBson,new UpdateOptions { IsUpsert = true });
+        }
+
+        IMongoCollection<BsonDocument> _offsets => _database.GetCollection<BsonDocument>(OFFSETS, _offsetsSettings);
+        void Bootstrap()
+        {
+            _offsetsSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Acknowledged };
         }
 
         #region IDisposable Support

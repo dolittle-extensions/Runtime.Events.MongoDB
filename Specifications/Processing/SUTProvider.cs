@@ -21,6 +21,6 @@ namespace Dolittle.Runtime.Events.Processing.MongoDB.Specs
             _logger = logger_mock.Object;
         }
 
-        public IEventProcessorOffsetRepository Build() => new test_mongodb_offset_repository(new a_mongo_db(),_logger);
+        public IEventProcessorOffsetRepository Build() => new test_mongodb_offset_repository(new a_mongo_db_connection(),_logger);
     }
 }

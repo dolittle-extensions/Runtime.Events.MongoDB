@@ -20,39 +20,32 @@ namespace Dolittle.Runtime.Events.Relativity.MongoDB
     /// </summary>
     public class Geodesics : IGeodesics
     {
-        object lock_object = new object();
         /// <summary>
         /// Name of the Offsets collection
         /// </summary>
         public const string OFFSETS = "geodesic_offsets"; 
+        object lock_object = new object();
 
-        private IMongoDatabase _database;
-        private MongoCollectionSettings _offsetsSettings;
-        private ILogger _logger;
+        IMongoDatabase _database;
+        MongoCollectionSettings _offsetsSettings;
+        ILogger _logger;
 
         /// <summary>
         /// Instantiates an instance of <see cref="IGeodesics" />
         /// </summary>
-        /// <param name="database">A MongoDB instance</param>
+        /// <param name="connection">The connection for the <see cref="IMongoDatabase"/></param>
         /// <param name="logger">A logger instance</param>
-        public Geodesics(IMongoDatabase database, ILogger logger)
+        public Geodesics(Connection connection, ILogger logger)
         {
-            _database = database;
+            _database = connection.Database;
             _logger = logger;
             Bootstrap();
         }
 
-        void Bootstrap()
-        {
-            _offsetsSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Acknowledged };
-        }
-
-        private IMongoCollection<BsonDocument> Offsets => _database.GetCollection<BsonDocument>(OFFSETS, _offsetsSettings);
-
         /// <inheritdoc />
         public ulong GetOffset(EventHorizonKey key)
         {
-            var offset = Offsets.Find(key.ToFilter()).SingleOrDefault();
+            var offset = _offsets.Find(key.ToFilter()).SingleOrDefault();
             if(offset == null)
                 return 0;
             
@@ -68,8 +61,16 @@ namespace Dolittle.Runtime.Events.Relativity.MongoDB
                 { Constants.OFFSET, offset }
             });
             
-            Offsets.ReplaceOne(key.ToFilter(),offsetBson,new UpdateOptions { IsUpsert = true });
+            _offsets.ReplaceOne(key.ToFilter(),offsetBson,new UpdateOptions { IsUpsert = true });
         }
+
+        IMongoCollection<BsonDocument> _offsets => _database.GetCollection<BsonDocument>(OFFSETS, _offsetsSettings);
+        void Bootstrap()
+        {
+            _offsetsSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Acknowledged };
+        }
+
+
 
         #region IDisposable Support
         /// <summary>
