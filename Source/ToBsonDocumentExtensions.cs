@@ -13,6 +13,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using Dolittle.Runtime.Events.Store;
 using Dolittle.Runtime.Events.Processing;
+using MongoDB.Bson.IO;
 
 namespace Dolittle.Runtime.Events.MongoDB
 {
@@ -42,7 +43,8 @@ namespace Dolittle.Runtime.Events.MongoDB
                     { VersionConstants.SEQUENCE, e.Metadata.VersionedEventSource.Version.Sequence},
                     { EventConstants.OCCURRED, e.Metadata.Occurred.UtcTicks },
                     { EventConstants.ORIGINAL_CONTEXT, e.Metadata.OriginalContext.AsBson()},
-                    { EventConstants.EVENT, BsonDocumentWrapper.Create<PropertyBag>(e.Event) }
+                    { EventConstants.EVENT, PropertyBagBsonSerializer.Serialize(e.Event) }
+                    
                 });
             });
                     
@@ -60,7 +62,11 @@ namespace Dolittle.Runtime.Events.MongoDB
             });
             return doc;
         }
-
+        static BsonDocument AsBson(this PropertyBag propertyBag)
+        {
+            var doc = new BsonDocument(propertyBag);
+            return doc;
+        }
         /// <summary>
         /// Converts a <see cref="VersionedEventSource" /> into its <see cref="BsonDocument" /> representation
         /// </summary>
