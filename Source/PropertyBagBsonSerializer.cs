@@ -2,6 +2,7 @@
  *  Copyright (c) Dolittle. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  * --------------------------------------------------------------------------------------------*/
+
 using System;
 using System.Collections;
 using Dolittle.Collections;
@@ -12,10 +13,16 @@ using MongoDB.Bson.Serialization;
 
 namespace Dolittle.Runtime.Events.MongoDB
 {
-    internal static class PropertyBagBsonSerializer
+    /// <summary>
+    /// Defines a set of functions for serializing <see cref="PropertyBag"/> to and from <see cref="BsonDocument"/>
+    /// </summary>
+    public static class PropertyBagBsonSerializer
     {
-
-        internal static PropertyBag Deserialize(BsonDocument doc)
+        /// <summary>
+        /// Serialize a <see cref="BsonDocument"/> to a <see cref="PropertyBag"/>
+        /// </summary>
+        /// <param name="doc"></param>
+        public static PropertyBag Deserialize(BsonDocument doc)
         {
             var bsonAsDictionary = doc.ToDictionary();
             var nonNullDictionary = new NullFreeDictionary<string,object>();
@@ -27,8 +34,12 @@ namespace Dolittle.Runtime.Events.MongoDB
             var propertyBag = new PropertyBag(nonNullDictionary);
             return propertyBag;
         }
-
-        internal static BsonDocument Serialize(PropertyBag propertyBag)
+        /// <summary>
+        /// Serialize a <see cref="PropertyBag"/> to a <see cref="BsonDocument"/>
+        /// </summary>
+        /// <param name="propertyBag"></param>
+        /// <returns></returns>
+        public static BsonDocument Serialize(PropertyBag propertyBag)
         {
             var doc = new BsonDocument();
             propertyBag.ForEach(kvp => {
