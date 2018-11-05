@@ -84,15 +84,7 @@ namespace Dolittle.Runtime.Events.MongoDB
         /// <returns>The corresponding <see cref="PropertyBag" /></returns>        
         public static PropertyBag ToPropertyBag(this BsonValue value)
         {
-            var bsonAsDictionary = value.AsBsonDocument.ToDictionary();
-            var nonNullDictionary = new NullFreeDictionary<string,object>();
-            bsonAsDictionary.ForEach(kvp =>
-            {
-                if(kvp.Value != null)
-                    nonNullDictionary.Add(kvp);
-            });
-            var propertyBag = new PropertyBag(nonNullDictionary);
-            return propertyBag;
+            return PropertyBagBsonSerializer.Deserialize(value.AsBsonDocument);
         }
 
         /// <summary>
