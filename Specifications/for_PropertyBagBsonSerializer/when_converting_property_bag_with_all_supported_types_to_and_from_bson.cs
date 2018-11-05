@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Dolittle.Collections;
 using Dolittle.PropertyBags;
 using Machine.Specifications;
@@ -44,7 +45,7 @@ namespace Dolittle.Runtime.Events.MongoDB.Specs.for_PropertyBagBsonSerializer
                 {"arrayOfInt", original_arrayOfInt},
                 {"arrayOfGuid", original_arrayOfGuid},
                 {"listOfInt", original_listOfInt},
-                {"listIfGuid", original_listOfGuid}
+                {"listOfGuid", original_listOfGuid}
             }
         );
 
@@ -55,7 +56,40 @@ namespace Dolittle.Runtime.Events.MongoDB.Specs.for_PropertyBagBsonSerializer
         };
 
         It should_create_a_bson_document = () => bson_result.ShouldNotBeNull();
-        
-        It should_serialize_back_to_property_bag = () => result.ShouldNotBeNull(); 
+        It should_serialize_back_to_property_bag = () => result.ShouldNotBeNull();
+
+        It should_serialize_to_the_correct_property_bag = () => 
+        {
+            result["string"].ShouldEqual(original["string"]);
+            result["int"].ShouldEqual(original["int"]);
+            result["long"].ShouldEqual(original["long"]);
+            uint.Parse(result["uint"].ToString()).ShouldEqual(original["uint"]);
+            ulong.Parse(result["ulong"].ToString()).ShouldEqual(original["ulong"]);
+            Int32.Parse(result["int32"].ToString()).ShouldEqual(original["int32"]);
+            Int64.Parse(result["int64"].ToString()).ShouldEqual(original["int64"]);
+            UInt32.Parse(result["uint32"].ToString()).ShouldEqual(original["uint32"]);
+            UInt64.Parse(result["uint64"].ToString()).ShouldEqual(original["uint64"]);
+            float.Parse(result["float"].ToString()).ShouldEqual(original["float"]);
+            double.Parse(result["double"].ToString()).ShouldEqual(original["double"]);
+            result["bool"].ShouldEqual(original["bool"]);
+            result["dateTime"].ShouldEqual(original["dateTime"]);
+            new DateTimeOffset(long.Parse(result["dateTimeOffset"].ToString()), new TimeSpan(0,0,0)).ShouldEqual(original["dateTimeOffset"]);
+            result["guid"].ShouldEqual(original["guid"]);
+
+            var result_arrayOfInt = CreateArrayOf<int>(result["arrayOfInt"], (object obj) => int.Parse(obj.ToString())).ToArray();
+            result_arrayOfInt.ShouldContainOnly(original_arrayOfInt);
+            var result_arrayOfGuid = CreateArrayOf<Guid>(result["arrayOfGuid"], (object obj) => Guid.Parse(obj.ToString())).ToArray();
+            result_arrayOfGuid.ShouldContainOnly(original_arrayOfGuid);
+
+            var result_listOfInt = CreateArrayOf<int>(result["listOfInt"], (object obj) => int.Parse(obj.ToString())).ToList();
+            result_listOfInt.ShouldContainOnly(original_listOfInt);
+            var result_listOfGuid = CreateArrayOf<Guid>(result["listOfGuid"], (object obj) => Guid.Parse(obj.ToString())).ToList();
+            result_listOfGuid.ShouldContainOnly(original_listOfGuid);
+        };
+
+        static IEnumerable<TResult> CreateArrayOf<TResult>(object arrayObject, Func<object, TResult> converterFunc) => 
+            ((System.Collections.IEnumerable) arrayObject)
+                .Cast<object>()
+                .Select(converterFunc);
     }
 }
