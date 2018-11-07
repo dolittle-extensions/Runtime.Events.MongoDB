@@ -57,7 +57,10 @@ namespace Dolittle.Runtime.Events.MongoDB
                 var enumerableValue = value as IEnumerable;
                 foreach (var obj in enumerableValue)
                 {
-                    bsonValue.Add(ValueAsBsonValue(obj));
+                    if (obj.GetType() == typeof(PropertyBag)) 
+                        bsonValue.Add(Serialize((PropertyBag)obj));
+                    else 
+                        bsonValue.Add(ValueAsBsonValue(obj));
                 }
                 return bsonValue;
             }
