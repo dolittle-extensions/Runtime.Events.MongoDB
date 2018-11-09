@@ -16,8 +16,7 @@ namespace Dolittle.Runtime.Events.MongoDB
         {
             {typeof(Dolittle.Runtime.Events.Store.IEventStore), typeof(Dolittle.Runtime.Events.Store.MongoDB.EventStore)},
             {typeof(Dolittle.Runtime.Events.Relativity.IGeodesics), typeof(Dolittle.Runtime.Events.Relativity.MongoDB.Geodesics)},
-            {typeof(Dolittle.Runtime.Events.Processing.IEventProcessorOffsetRepository), typeof(Dolittle.Runtime.Events.Processing.MongoDB.EventProcessorOffsetRepository)},
-            {typeof(Dolittle.Runtime.Events.Relativity.ITenantOffsetRepository), typeof(Dolittle.Runtime.Events.Relativity.TenantOffsetRepository)}
+            {typeof(Dolittle.Runtime.Events.Processing.IEventProcessorOffsetRepository), typeof(Dolittle.Runtime.Events.Processing.MongoDB.EventProcessorOffsetRepository)}
         };
         
         /// <inheritdoc/>
