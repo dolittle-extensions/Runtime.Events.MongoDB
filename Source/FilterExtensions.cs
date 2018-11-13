@@ -9,6 +9,7 @@ using Dolittle.Artifacts;
 using Dolittle.Runtime.Events.Store;
 using Dolittle.Runtime.Events.Processing;
 using Dolittle.Runtime.Events.Relativity;
+using Dolittle.Runtime.Events.Relativity.MongoDB;
 
 namespace Dolittle.Runtime.Events.MongoDB
 {
@@ -85,7 +86,7 @@ namespace Dolittle.Runtime.Events.MongoDB
         public static FilterDefinition<BsonDocument> ToFilter(this EventHorizonKey key)
         {
             var builder = Builders<BsonDocument>.Filter;                   
-            var filter = builder.Eq(Constants.ID, key.GetHashCode());
+            var filter = builder.Eq(Constants.ID, key.AsId());
             return filter;
         }
 
