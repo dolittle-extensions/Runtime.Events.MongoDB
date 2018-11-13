@@ -29,7 +29,7 @@ namespace Dolittle.Runtime.Events.MongoDB
         /// <returns>The corresponding <see cref="DateTimeOffset" /></returns>
         public static DateTimeOffset AsDateTimeOffset(this BsonValue value)
         {
-            return new DateTimeOffset(value.AsInt64, new TimeSpan(0,0,0));
+            return DateTimeOffset.FromUnixTimeMilliseconds(value.AsInt64);
         }
 
         /// <summary>

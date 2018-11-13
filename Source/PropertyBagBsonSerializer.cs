@@ -65,7 +65,7 @@ namespace Dolittle.Runtime.Events.MongoDB
                 return bsonValue;
             }
             else if (valueType.Equals(typeof(Guid))) return new BsonBinaryData((Guid)value);
-            else if (valueType.Equals(typeof(DateTimeOffset))) return new BsonInt64(((DateTimeOffset)value).UtcTicks);
+            else if (valueType.Equals(typeof(DateTimeOffset))) return new BsonInt64(((DateTimeOffset)value).ToUnixTimeMilliseconds());
             else return BsonValue.Create(value);
             
         }
