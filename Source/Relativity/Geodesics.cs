@@ -55,13 +55,9 @@ namespace Dolittle.Runtime.Events.Relativity.MongoDB
         /// <inheritdoc />
         public void SetOffset(EventHorizonKey key, ulong offset)
         {
-            var offsetBson = new BsonDocument( new Dictionary<string,object>
-            {
-                { Constants.ID, key.GetHashCode() },
-                { Constants.OFFSET, offset }
-            });
+            var offsetBson = key.ToOffsetBson(offset);
             
-            _offsets.ReplaceOne(key.ToFilter(),offsetBson,new UpdateOptions { IsUpsert = true });
+            _offsets.ReplaceOne(key.ToFilter(), offsetBson, new UpdateOptions { IsUpsert = true });
         }
 
         IMongoCollection<BsonDocument> _offsets => _database.GetCollection<BsonDocument>(OFFSETS, _offsetsSettings);

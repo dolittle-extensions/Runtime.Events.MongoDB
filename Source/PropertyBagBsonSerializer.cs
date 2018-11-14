@@ -8,6 +8,7 @@ using System.Collections;
 using Dolittle.Collections;
 using Dolittle.PropertyBags;
 using Dolittle.Reflection;
+using Dolittle.Time;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 
@@ -65,7 +66,8 @@ namespace Dolittle.Runtime.Events.MongoDB
                 return bsonValue;
             }
             else if (valueType.Equals(typeof(Guid))) return new BsonBinaryData((Guid)value);
-            else if (valueType.Equals(typeof(DateTimeOffset))) return new BsonInt64(((DateTimeOffset)value).UtcTicks);
+            else if (valueType.Equals(typeof(DateTime))) return new BsonInt64(((DateTime)value).ToUnixTimeMilliseconds());
+            else if (valueType.Equals(typeof(DateTimeOffset))) return new BsonInt64(((DateTimeOffset)value).ToUnixTimeMilliseconds());
             else return BsonValue.Create(value);
             
         }

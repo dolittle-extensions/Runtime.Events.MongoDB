@@ -35,11 +35,11 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// </summary>
         public const string UpdateJSCommand = "function (x){ return insert_commit(x);}";
 
-        IMongoDatabase _database;
+        readonly IMongoDatabase _database;
+        readonly ILogger _logger;
         MongoCollectionSettings _commitSettings;
         MongoCollectionSettings _versionSettings;
         MongoCollectionSettings _snapshotSettings;
-        ILogger _logger;
 
         bool _isConfigured = false;
 

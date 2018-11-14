@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dolittle.Collections;
+using Dolittle.Time;
 using Dolittle.PropertyBags;
 using Machine.Specifications;
 using MongoDB.Bson;
@@ -72,8 +73,8 @@ namespace Dolittle.Runtime.Events.MongoDB.Specs.for_PropertyBagBsonSerializer
             float.Parse(result["float"].ToString()).ShouldEqual(original["float"]);
             double.Parse(result["double"].ToString()).ShouldEqual(original["double"]);
             result["bool"].ShouldEqual(original["bool"]);
-            result["dateTime"].ShouldEqual(original["dateTime"]);
-            new DateTimeOffset(long.Parse(result["dateTimeOffset"].ToString()), new TimeSpan(0,0,0)).ShouldEqual(original["dateTimeOffset"]);
+            DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(result["dateTime"].ToString())).LossyEquals(new DateTimeOffset(((DateTime)original["dateTime"]).ToUniversalTime()));
+            DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(result["dateTimeOffset"].ToString())).LossyEquals(((DateTimeOffset)original["dateTimeOffset"]).ToUniversalTime());
             result["guid"].ShouldEqual(original["guid"]);
 
             var result_arrayOfInt = CreateArrayOf<int>(result["arrayOfInt"], (object obj) => int.Parse(obj.ToString())).ToArray();

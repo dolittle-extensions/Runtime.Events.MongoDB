@@ -41,7 +41,7 @@ namespace Dolittle.Runtime.Events.MongoDB
                     { Constants.EVENTSOURCE_ID, e.Metadata.EventSourceId.Value },
                     { VersionConstants.COMMIT, e.Metadata.VersionedEventSource.Version.Commit},
                     { VersionConstants.SEQUENCE, e.Metadata.VersionedEventSource.Version.Sequence},
-                    { EventConstants.OCCURRED, e.Metadata.Occurred.UtcTicks },
+                    { EventConstants.OCCURRED, e.Metadata.Occurred.ToUnixTimeMilliseconds() },
                     { EventConstants.ORIGINAL_CONTEXT, e.Metadata.OriginalContext.AsBson()},
                     { EventConstants.EVENT, PropertyBagBsonSerializer.Serialize(e.Event) }
                     
