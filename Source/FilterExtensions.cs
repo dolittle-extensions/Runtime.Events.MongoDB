@@ -19,14 +19,14 @@ namespace Dolittle.Runtime.Events.MongoDB
     public static class FilterExtensions
     {
         /// <summary>
-        /// Builds a <see cref="FilterDefinition{BsonDocument}" /> corresponding to the <see cref="EventSourceId" /> supplied
+        /// Builds a <see cref="FilterDefinition{BsonDocument}" /> corresponding to the <see cref="EventSourceKey" /> supplied
         /// </summary>
-        /// <param name="id">An <see cref="EventSourceId" /></param>
-        /// <returns>A <see cref="FilterDefinition{BsonDocument}" /> corresponding to the <see cref="EventSourceId" /></returns>
-        public static FilterDefinition<BsonDocument> ToFilter(this EventSourceId id)
+        /// <param name="key">An <see cref="EventSourceKey" /></param>
+        /// <returns>A <see cref="FilterDefinition{BsonDocument}" /> corresponding to the <see cref="EventSourceKey" /></returns>
+        public static FilterDefinition<BsonDocument> ToFilter(this EventSourceKey key)
         {
             var builder = Builders<BsonDocument>.Filter;                   
-            var filter = builder.Eq(Constants.EVENTSOURCE_ID, id.Value);
+            var filter = builder.Eq(Constants.EVENTSOURCE_ID, key.Id.Value) & builder.Eq(Constants.EVENT_SOURCE_ARTIFACT, key.Artifact.Value);
             return filter;
         }
 

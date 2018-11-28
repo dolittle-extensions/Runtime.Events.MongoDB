@@ -21,7 +21,6 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
     /// </summary>
     public class EventStore : IEventStore
     {
-
         object lock_object = new object();
         readonly EventStoreMongoDBConfiguration _config;
         readonly ILogger _logger;
@@ -48,10 +47,8 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                     if(result.IsSuccessfulCommit()){
                         var sequence_number =  result[Constants.ID].ToUlong();
                         var committed = uncommittedEvents.ToCommitted(sequence_number);
-                        UpdateVersion(committed.Source);
                         return committed;
                     } else if(result.IsKnownError()){
-                        ValidateVersionAgainstCommits(uncommittedEvents.Source.EventSource);
                         if(result.IsPreviousVersion()){
                             throw new EventSourceConcurrencyConflict($"Current Version is {result["version"]}, tried to commit {uncommittedEvents.Source.Version.Commit}");
                         }
@@ -72,15 +69,15 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         }
 
         /// <inheritdoc />
-        public Commits Fetch(EventSourceId eventSourceId)
+        public Commits Fetch(EventSourceKey eventSourceKey)
         {
-           return FindCommitsWithSorting(eventSourceId.ToFilter()); 
+           return FindCommitsWithSorting(eventSourceKey.ToFilter()); 
         }
 
         /// <inheritdoc />
-        public Commits FetchFrom(EventSourceId eventSourceId, CommitVersion commitVersion)
+        public Commits FetchFrom(EventSourceKey eventSourceKey, CommitVersion commitVersion)
         {
-            return FindCommitsWithSorting(eventSourceId.ToFilter() & commitVersion.ToFilter());
+            return FindCommitsWithSorting(eventSourceKey.ToFilter() & commitVersion.ToFilter());
         }
 
         /// <inheritdoc />
@@ -89,22 +86,13 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             return FindCommitsWithSorting(commit.ToFilter());
         }
 
-        void ValidateVersionAgainstCommits(EventSourceId eventSource)
-        {
-            var versionFromCommits = GetVersionFromCommits(eventSource);
-            var versionFromVersion = GetCurrentVersionFor(eventSource);
-            if(versionFromCommits.Version.CompareTo(versionFromVersion) > 0)
-            {
-                UpdateVersion(versionFromCommits);
-            }
-        }
-        VersionedEventSource GetVersionFromCommits(EventSourceId eventSource)
+        VersionedEventSource GetVersionFromCommits(EventSourceKey eventSource)
         {
             var builder = Builders<BsonDocument>.Sort;
             var sort = builder.Ascending(Constants.VERSION);
             var commitDoc = _config.Commits.Find(eventSource.ToFilter()).Sort(sort).Limit(1).ToList().SingleOrDefault();
             if(commitDoc == null)
-                return new VersionedEventSource(EventSourceVersion.NoVersion,eventSource,Guid.Empty);
+                return new VersionedEventSource(EventSourceVersion.NoVersion,eventSource);
 
             return commitDoc.ToCommittedEventStream().Source;
         }
@@ -220,9 +208,12 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         }
 
         /// <inheritdoc />
-        public EventSourceVersion GetCurrentVersionFor(EventSourceId eventSource)
+        public EventSourceVersion GetCurrentVersionFor(EventSourceKey eventSource)
         {
-            var version = _config.Versions.Find(eventSource.ToFilter()).SingleOrDefault();
+            var builder = Builders<BsonDocument>.Sort;
+            var filter = eventSource.ToFilter();
+            var sort = builder.Descending(VersionConstants.COMMIT);
+            var version = _config.Commits.Find<BsonDocument>(filter).Sort(sort).Limit(1).FirstOrDefault();
             if(version == null)
                 return EventSourceVersion.NoVersion;
             
@@ -230,7 +221,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         }
 
         /// <inheritdoc />
-        public EventSourceVersion GetNextVersionFor(EventSourceId eventSource)
+        public EventSourceVersion GetNextVersionFor(EventSourceKey eventSource)
         {
             return GetCurrentVersionFor(eventSource).NextCommit();
         }
@@ -257,32 +248,6 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                 events.AddRange(commit.Events.FilteredByEventType(eventType).Select(e => new CommittedEventEnvelope(commit.Sequence,e.Metadata,e.Event)));
             }
             return new SingleEventTypeEventStream(events);
-        }
-
-        /// <summary>
-        /// Updates the Version of the <see cref="EventSource" />
-        /// </summary>
-        /// <param name="version">The version to update to</param>
-        protected void UpdateVersion(VersionedEventSource version)
-        {
-            if (version != null)
-            {
-                try
-                {
-                    var versionBson = version.AsBsonVersion();
-                    versionBson.Add(Constants.ID, version.EventSource.Value);
-                    var result = _config.Versions.ReplaceOne(version.EventSource.ToFilter(),versionBson,new UpdateOptions { IsUpsert = true });
-                }
-                catch (OutOfMemoryException)
-                {
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    //Swallowing the exception for now but this could cause a problem for our "stateless" 
-                    _logger.Error(ex,"Exception updating version collection to latest version");
-                }
-            }
         }
     }
 }
