@@ -21,11 +21,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Specs
         {
             _database_runner = database_runner;
         }
-
-        public void TestUpdateVersion(VersionedEventSource version)
-        {
-            this.UpdateVersion(version);
-        }
+        
         protected override void Dispose(bool disposing)
         {
             if (!disposedValue)
