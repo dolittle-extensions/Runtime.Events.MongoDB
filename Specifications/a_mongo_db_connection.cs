@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Dolittle.Resources.Configuration;
+using Dolittle.Runtime.Events.MongoDB;
 using Dolittle.Runtime.Events.Store.MongoDB;
 using Mongo2Go;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
 using Moq;
-namespace Dolittle.Runtime.Events.MongoDB.Specs
+namespace Dolittle.Runtime.Events.Specs.MongoDB
 {
     public class a_mongo_db_connection : IDisposable
     {
