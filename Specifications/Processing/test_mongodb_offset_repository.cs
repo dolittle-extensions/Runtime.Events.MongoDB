@@ -9,7 +9,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using Dolittle.Applications;
 using Dolittle.Logging;
-using Dolittle.Runtime.Events.MongoDB.Specs;
+using Dolittle.Runtime.Events.Specs.MongoDB;
 
 namespace Dolittle.Runtime.Events.Processing.MongoDB.Specs
 {
