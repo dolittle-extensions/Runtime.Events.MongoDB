@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Dolittle.Resources.Configuration;
+using Dolittle.ResourceTypes.Configuration;
 using Dolittle.Runtime.Events.MongoDB;
 using Dolittle.Runtime.Events.Store.MongoDB;
 using Mongo2Go;

@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  * --------------------------------------------------------------------------------------------*/
  
-using Dolittle.Resources.Configuration;
+using Dolittle.ResourceTypes.Configuration;
 using MongoDB.Driver;
 
 namespace Dolittle.Runtime.Events.MongoDB
