@@ -100,7 +100,7 @@ namespace Dolittle.Runtime.Events.MongoDB
             var eventSourceId = doc[Constants.EVENTSOURCE_ID].AsGuid;
             var major = doc[VersionConstants.COMMIT].ToUlong();
             var minor = doc[VersionConstants.SEQUENCE].ToUint();
-            return new VersionedEventSource(new EventSourceVersion(major,minor),eventSourceId,artifact);
+            return new VersionedEventSource(new EventSourceVersion(major,minor),new EventSourceKey(eventSourceId,artifact));
         }
 
         /// <summary>

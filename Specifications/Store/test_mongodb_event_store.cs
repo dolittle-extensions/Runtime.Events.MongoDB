@@ -9,7 +9,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using Dolittle.Applications;
 using Dolittle.Logging;
-using Dolittle.Runtime.Events.MongoDB.Specs;
+using Dolittle.Runtime.Events.Specs.MongoDB;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB.Specs
 {
@@ -21,11 +21,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Specs
         {
             _database_runner = database_runner;
         }
-
-        public void TestUpdateVersion(VersionedEventSource version)
-        {
-            this.UpdateVersion(version);
-        }
+        
         protected override void Dispose(bool disposing)
         {
             if (!disposedValue)

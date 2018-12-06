@@ -81,7 +81,7 @@ namespace Dolittle.Runtime.Events.MongoDB
         var result;
         while (true) {{
             var newer_version;
-            db.{EventStoreMongoDBConfiguration.COMMITS}.find( {{ eventsource_id: commit.eventsource_id, commit: {{ $gte: commit.commit }} }} ).sort({{commit:-1}}).limit(1).forEach(v => newer_version = v);
+            db.{EventStoreMongoDBConfiguration.COMMITS}.find( {{ {Constants.EVENTSOURCE_ID}: commit.{Constants.EVENTSOURCE_ID}, {Constants.EVENT_SOURCE_ARTIFACT}: commit.{Constants.EVENT_SOURCE_ARTIFACT}, {VersionConstants.COMMIT}: {{ $gte: commit.{VersionConstants.COMMIT} }} }} ).sort({{commit:-1}}).limit(1).forEach(v => newer_version = v);
             if(newer_version){{
                 result = {{ err: {{ {VersionConstants.COMMIT}:newer_version.commit }} }};
                 break;

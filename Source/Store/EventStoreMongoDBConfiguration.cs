@@ -22,14 +22,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// Name of the Commits collection
         /// </summary>
         public const string COMMITS = "commits"; 
-        /// <summary>
-        /// Name of the Versions collection
-        /// </summary>
-        public const string VERSIONS = "versions";
-        /// <summary>
-        /// Name of the Snapshots collection
-        /// </summary>
-        public const string SNAPSHOTS = "snapshots";
+
         /// <summary>
         /// MongoDB command text for inserting a commit
         /// </summary>
@@ -38,8 +31,6 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         readonly IMongoDatabase _database;
         readonly ILogger _logger;
         MongoCollectionSettings _commitSettings;
-        MongoCollectionSettings _versionSettings;
-        MongoCollectionSettings _snapshotSettings;
 
         bool _isConfigured = false;
 
@@ -60,19 +51,12 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// </summary>
         /// <returns><see cref="IMongoCollection{BsonDocument}"/> representing the Commits"</returns>
         public IMongoCollection<BsonDocument> Commits => _database.GetCollection<BsonDocument>(COMMITS, _commitSettings);
-        /// <summary>
-        /// Access to the IMongoCollection{BsonDocument} representing the Versions
-        /// </summary>
-        /// <returns><see cref="IMongoCollection{BsonDocument}"/> representing the Versions"</returns>
-        public IMongoCollection<BsonDocument> Versions => _database.GetCollection<BsonDocument>(VERSIONS, _versionSettings);
 
         void Bootstrap()
         {
             if(!_isConfigured)
             {
                 _commitSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Acknowledged };
-                _versionSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Unacknowledged };
-                _snapshotSettings = new MongoCollectionSettings{ AssignIdOnInsert = false, WriteConcern = WriteConcern.Unacknowledged };
                 CreateIndexes();
                 CreateUpdateScript();
                 _isConfigured = true;
@@ -114,7 +98,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             var model = new CreateIndexModel<BsonDocument>(keys, new CreateIndexOptions<BsonDocument>{ Unique = true });
             Commits.Indexes.CreateOne(model);
 
-            keys = Builders<BsonDocument>.IndexKeys.Ascending(Constants.EVENTSOURCE_ID).Descending(VersionConstants.COMMIT);
+            keys = Builders<BsonDocument>.IndexKeys.Ascending(Constants.EVENTSOURCE_ID).Descending(VersionConstants.COMMIT).Ascending(Constants.EVENT_SOURCE_ARTIFACT);
             model = new CreateIndexModel<BsonDocument>(keys, new CreateIndexOptions<BsonDocument>{ Unique = true });
             Commits.Indexes.CreateOne(model);
         }
