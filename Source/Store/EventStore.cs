@@ -58,9 +58,10 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                             throw new EventSourceConcurrencyConflict();
                         }
                     } else {
-                        throw new Exception("Unknown error type");
+                        throw new Exception($"Unknown error type: {result?.ToString() ?? "[NULL]"}");
                     }
-                } catch(Exception ex)
+                } 
+                catch(Exception ex)
                 {
                     _logger.Error(ex,"Exception committing event stream");
                     throw;
