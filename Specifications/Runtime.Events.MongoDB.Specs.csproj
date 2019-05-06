@@ -16,8 +16,8 @@
   </ItemGroup>
 
  <ItemGroup>
-    <PackageReference Include="Dolittle.Artifacts" Version="2.0.0-*" />
-    <PackageReference Include="Dolittle.Time" Version="2.0.0-*" />
+    <PackageReference Include="Dolittle.Artifacts" Version="3.*" />
+    <PackageReference Include="Dolittle.Time" Version="3.*" />
   </ItemGroup>
 
   <ItemGroup>
