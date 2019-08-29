@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Dolittle.Collections;
 using Dolittle.PropertyBags;
 using Dolittle.Reflection;
@@ -25,16 +26,37 @@ namespace Dolittle.Runtime.Events.MongoDB
         /// <param name="doc"></param>
         public static PropertyBag Deserialize(BsonDocument doc)
         {
-            var bsonAsDictionary = doc.ToDictionary();
             var nonNullDictionary = new NullFreeDictionary<string,object>();
-            bsonAsDictionary.ForEach(kvp =>
-            {
-                if(kvp.Value != null)
-                    nonNullDictionary.Add(kvp);
+            doc.ForEach(kvp => {
+                var value = BsonValueAsValue(kvp.Value);
+                if (value != null) nonNullDictionary.Add(kvp.Name, value);
             });
-            var propertyBag = new PropertyBag(nonNullDictionary);
-            return propertyBag;
+            return new PropertyBag(nonNullDictionary);
         }
+
+        static object BsonValueAsValue(BsonValue value)
+        {
+            if (value.IsBsonArray)
+            {
+                var list = new List<object>();
+                foreach (var obj in value.AsBsonArray)
+                {
+                    if (obj.IsBsonDocument)
+                        list.Add(Deserialize(obj.AsBsonDocument));
+                    else
+                        list.Add(BsonValueAsValue(value));
+                }
+                return list;
+            }
+            if (value.IsGuid) return value.AsGuid;
+            if (value.IsInt64) {
+                var asDateTime = value.AsInt64.ToDateTime();
+                if (asDateTime.Year > 2000 && asDateTime.Year < 2050) return asDateTime; // This is really not nice!
+            }
+            return value;
+        }
+
+
         /// <summary>
         /// Serialize a <see cref="PropertyBag"/> to a <see cref="BsonDocument"/>
         /// </summary>
@@ -65,10 +87,10 @@ namespace Dolittle.Runtime.Events.MongoDB
                 }
                 return bsonValue;
             }
-            else if (valueType.Equals(typeof(Guid))) return new BsonBinaryData((Guid)value);
-            else if (valueType.Equals(typeof(DateTime))) return new BsonInt64(((DateTime)value).ToUnixTimeMilliseconds());
-            else if (valueType.Equals(typeof(DateTimeOffset))) return new BsonInt64(((DateTimeOffset)value).ToUnixTimeMilliseconds());
-            else return BsonValue.Create(value);
+            if (valueType.Equals(typeof(Guid))) return new BsonBinaryData((Guid)value);
+            if (valueType.Equals(typeof(DateTime))) return new BsonInt64(((DateTime)value).ToUnixTimeMilliseconds());
+            if (valueType.Equals(typeof(DateTimeOffset))) return new BsonInt64(((DateTimeOffset)value).ToUnixTimeMilliseconds());
+            return BsonValue.Create(value);
             
         }
     }
