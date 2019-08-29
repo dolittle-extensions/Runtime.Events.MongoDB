@@ -48,11 +48,6 @@ namespace Dolittle.Runtime.Events.MongoDB
                 }
                 return list;
             }
-            if (value.IsGuid) return value.AsGuid;
-            if (value.IsInt64) {
-                var asDateTime = value.AsInt64.ToDateTime();
-                if (asDateTime.Year > 2000 && asDateTime.Year < 2050) return asDateTime; // This is really not nice!
-            }
             return value;
         }
 
