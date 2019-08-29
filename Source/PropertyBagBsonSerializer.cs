@@ -48,7 +48,7 @@ namespace Dolittle.Runtime.Events.MongoDB
                 }
                 return list;
             }
-            return value;
+            return BsonTypeMapper.MapToDotNetValue(value);
         }
 
 
