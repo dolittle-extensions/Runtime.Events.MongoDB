@@ -6,13 +6,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Dolittle.Collections;
 using Dolittle.PropertyBags;
 using Dolittle.Reflection;
 using Dolittle.Time;
 using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
 
 namespace Dolittle.Runtime.Events.MongoDB
 {
@@ -37,9 +35,22 @@ namespace Dolittle.Runtime.Events.MongoDB
 
         static object BsonValueAsValue(BsonValue value)
         {
-            if (value.IsBsonArray) return value.AsBsonArray.Select(BsonValueAsValue);
+            if (value.IsBsonArray) return BsonArrayAsEnumerable(value.AsBsonArray);
             if (value.IsBsonDocument) return Deserialize(value.AsBsonDocument);
             return BsonTypeMapper.MapToDotNetValue(value);
+        }
+
+        static IEnumerable<object> BsonArrayAsEnumerable(BsonArray array)
+        {
+            var enumerable = new List<object>();
+            if (array != null)
+            {
+                foreach (var element in array)
+                {
+                    enumerable.Add(BsonValueAsValue(element));
+                }
+            }
+            return enumerable;
         }
 
 
@@ -60,12 +71,25 @@ namespace Dolittle.Runtime.Events.MongoDB
         static BsonValue ValueAsBsonValue(object value)
         {
             var type = value.GetType();
-            if (type.IsEnumerable()) return new BsonArray((value as IEnumerable<object>).Select(ValueAsBsonValue));
+            if (type.IsEnumerable()) return EnumerableAsBsonArray(value as IEnumerable);
             if (type.Equals(typeof(PropertyBag))) return Serialize(value as PropertyBag);
             if (type.Equals(typeof(Guid))) return new BsonBinaryData((Guid)value);
             if (type.Equals(typeof(DateTime))) return new BsonInt64(((DateTime)value).ToUnixTimeMilliseconds());
             if (type.Equals(typeof(DateTimeOffset))) return new BsonInt64(((DateTimeOffset)value).ToUnixTimeMilliseconds());
             return BsonValue.Create(value);            
+        }
+
+        static BsonArray EnumerableAsBsonArray(IEnumerable enumerable)
+        {
+            var array = new BsonArray();
+            if (enumerable != null)
+            {
+                foreach (var element in enumerable)
+                {
+                    array.Add(ValueAsBsonValue(element));
+                }
+            }
+            return array;
         }
     }
 }
