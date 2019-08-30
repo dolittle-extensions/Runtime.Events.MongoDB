@@ -6,6 +6,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Dolittle.Collections;
 using Dolittle.PropertyBags;
 using Dolittle.Reflection;
@@ -36,18 +37,8 @@ namespace Dolittle.Runtime.Events.MongoDB
 
         static object BsonValueAsValue(BsonValue value)
         {
-            if (value.IsBsonArray)
-            {
-                var list = new List<object>();
-                foreach (var obj in value.AsBsonArray)
-                {
-                    if (obj.IsBsonDocument)
-                        list.Add(Deserialize(obj.AsBsonDocument));
-                    else
-                        list.Add(BsonValueAsValue(value));
-                }
-                return list;
-            }
+            if (value.IsBsonArray) return value.AsBsonArray.Select(BsonValueAsValue);
+            if (value.IsBsonDocument) return Deserialize(value.AsBsonDocument);
             return BsonTypeMapper.MapToDotNetValue(value);
         }
 
@@ -68,25 +59,13 @@ namespace Dolittle.Runtime.Events.MongoDB
 
         static BsonValue ValueAsBsonValue(object value)
         {
-            var valueType = value.GetType();
-            if (valueType.IsEnumerable())
-            {
-                var bsonValue = new BsonArray();
-                var enumerableValue = value as IEnumerable;
-                foreach (var obj in enumerableValue)
-                {
-                    if (obj.GetType() == typeof(PropertyBag)) 
-                        bsonValue.Add(Serialize((PropertyBag)obj));
-                    else 
-                        bsonValue.Add(ValueAsBsonValue(obj));
-                }
-                return bsonValue;
-            }
-            if (valueType.Equals(typeof(Guid))) return new BsonBinaryData((Guid)value);
-            if (valueType.Equals(typeof(DateTime))) return new BsonInt64(((DateTime)value).ToUnixTimeMilliseconds());
-            if (valueType.Equals(typeof(DateTimeOffset))) return new BsonInt64(((DateTimeOffset)value).ToUnixTimeMilliseconds());
-            return BsonValue.Create(value);
-            
+            var type = value.GetType();
+            if (type.IsEnumerable()) return new BsonArray((value as IEnumerable<object>).Select(ValueAsBsonValue));
+            if (type.Equals(typeof(PropertyBag))) return Serialize(value as PropertyBag);
+            if (type.Equals(typeof(Guid))) return new BsonBinaryData((Guid)value);
+            if (type.Equals(typeof(DateTime))) return new BsonInt64(((DateTime)value).ToUnixTimeMilliseconds());
+            if (type.Equals(typeof(DateTimeOffset))) return new BsonInt64(((DateTimeOffset)value).ToUnixTimeMilliseconds());
+            return BsonValue.Create(value);            
         }
     }
 }
