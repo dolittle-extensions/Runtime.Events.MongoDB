@@ -71,8 +71,8 @@ namespace Dolittle.Runtime.Events.MongoDB
         static BsonValue ValueAsBsonValue(object value)
         {
             var type = value.GetType();
-            if (type.IsEnumerable()) return EnumerableAsBsonArray(value as IEnumerable);
             if (type.Equals(typeof(PropertyBag))) return Serialize(value as PropertyBag);
+            if (type.IsEnumerable()) return EnumerableAsBsonArray(value as IEnumerable);
             if (type.Equals(typeof(Guid))) return new BsonBinaryData((Guid)value);
             if (type.Equals(typeof(DateTime))) return new BsonInt64(((DateTime)value).ToUnixTimeMilliseconds());
             if (type.Equals(typeof(DateTimeOffset))) return new BsonInt64(((DateTimeOffset)value).ToUnixTimeMilliseconds());
