@@ -43,7 +43,6 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         {
             _database = connection.Database;
             _logger = logger;
-            _logger.Debug($"{_database.DatabaseNamespace} {this.GetHashCode()}");
             Bootstrap();
         }
         /// <summary>

@@ -76,6 +76,7 @@ namespace Dolittle.Runtime.Events.MongoDB
         public const string TIMESTAMP = "timestamp";
         public const string VERSION = "version";
         public const string EVENTS = "events";
+        public const int CONCURRENCY_EXCEPTION = 11000;
         public static string INSERT_COMMIT => $@"
     function insert_commit(commit) {{
         var result;
@@ -93,7 +94,7 @@ namespace Dolittle.Runtime.Events.MongoDB
             db.{EventStoreMongoDBConfiguration.COMMITS}.insert(commit);
             var err = db.getLastErrorObj();
             if(err && err.code) {{
-                if(err.code == 11000 && err.err.indexOf('$_id_') != -1 ){{
+                if(err.code == {CONCURRENCY_EXCEPTION} && err.err.indexOf('$_id_') != -1 ){{
                     continue;
                 }}
                 else{{
@@ -105,9 +106,7 @@ namespace Dolittle.Runtime.Events.MongoDB
             break;
         }}
         return result;
-    }}";
-
-        public const int CONCURRENCY_EXCEPTION = 11000; 
+    }}"; 
         #pragma warning disable 1591
     }
 }

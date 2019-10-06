@@ -6,6 +6,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Dolittle.Collections;
 using Dolittle.PropertyBags;
 using Dolittle.Reflection;
@@ -25,35 +26,34 @@ namespace Dolittle.Runtime.Events.MongoDB
         /// <param name="doc"></param>
         public static PropertyBag Deserialize(BsonDocument doc)
         {
+            var bsonAsDictionary = doc.ToDictionary();
+            return ToPropertyBag(bsonAsDictionary);
+        }
+
+        private static PropertyBag ToPropertyBag(Dictionary<string, object> target)
+        {
             var nonNullDictionary = new NullFreeDictionary<string,object>();
-            doc.ForEach(kvp => {
-                var value = BsonValueAsValue(kvp.Value);
-                if (value != null) nonNullDictionary.Add(kvp.Name, value);
+            target.ForEach(kvp =>
+            {
+                if (kvp.Value == null) return;
+                
+                var valueType = kvp.Value.GetType();
+                if (valueType == typeof(object[]))
+                {
+                    var instances = (from object obj in kvp.Value as IEnumerable select IsComplexType(obj) ? ToPropertyBag(obj as Dictionary<string, object>) : obj).ToList();
+                    nonNullDictionary.Add(new KeyValuePair<string, object>(kvp.Key, instances));
+                }
+                else
+                {
+                    nonNullDictionary.Add(IsComplexType(kvp.Value)
+                        ? new KeyValuePair<string, object>(kvp.Key, ToPropertyBag(kvp.Value as Dictionary<string, object>))
+                        : kvp);
+                }
             });
             return new PropertyBag(nonNullDictionary);
         }
-
-        static object BsonValueAsValue(BsonValue value)
-        {
-            if (value.IsBsonArray) return BsonArrayAsEnumerable(value.AsBsonArray);
-            if (value.IsBsonDocument) return Deserialize(value.AsBsonDocument);
-            return BsonTypeMapper.MapToDotNetValue(value);
-        }
-
-        static IEnumerable<object> BsonArrayAsEnumerable(BsonArray array)
-        {
-            var enumerable = new List<object>();
-            if (array != null)
-            {
-                foreach (var element in array)
-                {
-                    enumerable.Add(BsonValueAsValue(element));
-                }
-            }
-            return enumerable;
-        }
-
-
+        
+        
         /// <summary>
         /// Serialize a <see cref="PropertyBag"/> to a <see cref="BsonDocument"/>
         /// </summary>
@@ -90,6 +90,11 @@ namespace Dolittle.Runtime.Events.MongoDB
                 }
             }
             return array;
+        }
+        
+        static bool IsComplexType(object obj)
+        {
+            return obj.GetType() == typeof(Dictionary<string, object>);
         }
     }
 }

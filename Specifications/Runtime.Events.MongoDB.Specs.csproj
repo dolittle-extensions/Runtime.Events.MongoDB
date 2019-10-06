@@ -1,12 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../Build/MSBuild/specs.props"></Import>
 
   <ItemGroup>
-    <Compile Include="./Specs/**/*.cs" Exclude="./Specs/obj/**/*.cs;./Specs/bin/**/*.cs"/>
+    <Compile Include="./Specs/**/*.cs" Exclude="./Specs/obj/**/*.cs;./Specs/bin/**/*.cs" />
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
     <AssemblyName>Dolittle.Runtime.Events.MongoDB.Specs</AssemblyName>
     <RootNamespace>Dolittle.Runtime.Events.MongoDB.Specs</RootNamespace>
   </PropertyGroup>
@@ -21,9 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Mongo2Go" Version="2.2.4" />
-    <PackageReference Include="MongoDB.Bson" Version="2.7.0" />
-    <PackageReference Include="MongoDB.Driver" Version="2.7.0" />
-    <PackageReference Include="MongoDB.Driver.Core" Version="2.7.0" />
+    <PackageReference Include="Mongo2Go" Version="2.2.11" />
+    <PackageReference Include="MongoDB.Bson" Version="2.8.1" />
+    <PackageReference Include="MongoDB.Driver" Version="2.8.1" />
+    <PackageReference Include="MongoDB.Driver.Core" Version="2.8.1" />
   </ItemGroup>
 </Project>
