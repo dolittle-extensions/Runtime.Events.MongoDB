@@ -1,34 +1,24 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Dolittle. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- * --------------------------------------------------------------------------------------------*/
- 
+// Copyright (c) Dolittle. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using Dolittle.ResourceTypes.Configuration;
 using MongoDB.Driver;
 
 namespace Dolittle.Runtime.Events.MongoDB
 {
     /// <summary>
-    /// Represents the connection to the EventStore MongoDB database
+    /// Represents the connection to the EventStore MongoDB database.
     /// </summary>
     public class Connection
-    {   
+    {
         /// <summary>
-        /// Gets the configured <see cref="IMongoDatabase"/>
+        /// Initializes a new instance of the <see cref="Connection"/> class.
         /// </summary>
-        /// <value></value>
-        public IMongoDatabase Database { get; }
-        /// <summary>
-        /// Gets the <see cref="IMongoClient"/>
-        /// </summary>
-        public IMongoClient Server { get; }
-        /// <summary>
-        /// Instantiates an instance of <see cref="Connection"/>
-        /// </summary>
+        /// <param name="configurationWrapper"><see cref="IConfigurationFor{T}"/> <see cref="EventStoreConfiguration"/>.</param>
         public Connection(IConfigurationFor<EventStoreConfiguration> configurationWrapper)
         {
             var config = configurationWrapper.Instance;
-            if (string.IsNullOrEmpty(config.ConnectionString)) 
+            if (string.IsNullOrEmpty(config.ConnectionString))
             {
                 var s = MongoClientSettings.FromUrl(new MongoUrl(config.Host));
                 if (config.UseSSL)
@@ -40,13 +30,25 @@ namespace Dolittle.Runtime.Events.MongoDB
                         CheckCertificateRevocation = false
                     };
                 }
+
                 Server = new MongoClient(s);
             }
             else
+            {
                 Server = new MongoClient(config.ConnectionString);
+            }
 
             Database = Server.GetDatabase(config.Database);
-
         }
+
+        /// <summary>
+        /// Gets the configured <see cref="IMongoDatabase"/>.
+        /// </summary>
+        public IMongoDatabase Database { get; }
+
+        /// <summary>
+        /// Gets the <see cref="IMongoClient"/>.
+        /// </summary>
+        public IMongoClient Server { get; }
     }
 }
