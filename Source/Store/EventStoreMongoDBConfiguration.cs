@@ -41,25 +41,20 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         {
             _database = connection.Database;
             _logger = logger;
-            Bootstrap();
-            Commits = _database.GetCollection<BsonDocument>(COMMITS, _commitSettings);
+            if (!_isConfigured)
+            {
+                _commitSettings = new MongoCollectionSettings { AssignIdOnInsert = false, WriteConcern = WriteConcern.Acknowledged };
+                Commits = _database.GetCollection<BsonDocument>(COMMITS, _commitSettings);
+                CreateIndexes();
+                CreateUpdateScript();
+                _isConfigured = true;
+            }
         }
 
         /// <summary>
         /// Gets the <see cref="IMongoCollection{BsonDocument}"/> representing the Commits.
         /// </summary>
         public IMongoCollection<BsonDocument> Commits { get; }
-
-        void Bootstrap()
-        {
-            if (!_isConfigured)
-            {
-                _commitSettings = new MongoCollectionSettings { AssignIdOnInsert = false, WriteConcern = WriteConcern.Acknowledged };
-                CreateIndexes();
-                CreateUpdateScript();
-                _isConfigured = true;
-            }
-        }
 
         void CreateUpdateScript()
         {

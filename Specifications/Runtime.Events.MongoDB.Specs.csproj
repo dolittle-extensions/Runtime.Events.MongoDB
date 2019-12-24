@@ -1,12 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../Build/MSBuild/specs.props"></Import>
+  <Import Project="../specs.props"></Import>
 
   <ItemGroup>
     <Compile Include="./Specs/**/*.cs" Exclude="./Specs/obj/**/*.cs;./Specs/bin/**/*.cs" />
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
     <AssemblyName>Dolittle.Runtime.Events.MongoDB.Specs</AssemblyName>
     <RootNamespace>Dolittle.Runtime.Events.MongoDB.Specs</RootNamespace>
   </PropertyGroup>
