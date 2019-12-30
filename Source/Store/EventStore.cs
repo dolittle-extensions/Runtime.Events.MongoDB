@@ -50,7 +50,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                     {
                         if (result.IsPreviousVersion())
                         {
-                            throw new EventSourceConcurrencyConflict($"Current Version is {result["version"]}, tried to commit {uncommittedEvents.Source.Version.Commit}");
+                            throw new EventSourceConcurrencyConflict(result.ToEventSourceVersion(), uncommittedEvents.Source.Version);
                         }
                         else if (IsDuplicateCommit(uncommittedEvents.Id))
                         {
@@ -58,12 +58,12 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                         }
                         else
                         {
-                            throw new EventSourceConcurrencyConflict();
+                            throw new EventSourceConcurrencyConflict(result.ToEventSourceVersion(), uncommittedEvents.Source.Version);
                         }
                     }
                     else
                     {
-                        throw new Exception($"Unknown error type: {result?.ToString() ?? "[NULL]"}");
+                        throw new UnknownCommitError(result?.ToString() ?? "[NULL]");
                     }
                 }
                 catch (Exception ex)
@@ -152,7 +152,9 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         {
             if (_disposed)
             {
+#pragma warning disable DL0008
                 throw new ObjectDisposedException("Attempt to use storage after it has been disposed.");
+#pragma warning restore DL0008
             }
 
             try
@@ -180,7 +182,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             var result = _config.Commits.Database.Eval(EventStoreMongoDBConfiguration.UpdateJSCommand, new BsonValue[] { commit });
 
             if (result == null)
-                throw new Exception("The error response is not in the format of a Bson Document.  Cannot process.");
+                throw new InvalidCommitResponse(commit);
 
             return result.AsBsonDocument;
         }

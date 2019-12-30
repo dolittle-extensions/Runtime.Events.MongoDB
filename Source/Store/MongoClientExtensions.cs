@@ -1,7 +1,6 @@
 // Copyright (c) Dolittle. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using MongoDB.Bson;
@@ -28,14 +27,11 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// <returns>A <see cref="BsonValue" /> result.</returns>
         public static BsonValue Eval(this IMongoDatabase database, string javascript, IEnumerable<BsonValue> args = null)
         {
-            if (!(database.Client is MongoClient client))
-                throw new ArgumentException("Client is not a MongoClient");
-
             var op = GetEvalOperation(database, javascript, args);
 
             using (var sessionHandle = new CoreSessionHandle(NoCoreSession.Instance))
             {
-                using (var writeBinding = new WritableServerBinding(client.Cluster, sessionHandle))
+                using (var writeBinding = new WritableServerBinding(database.Client.Cluster, sessionHandle))
                 {
                     return op.Execute(writeBinding, CancellationToken.None);
                 }

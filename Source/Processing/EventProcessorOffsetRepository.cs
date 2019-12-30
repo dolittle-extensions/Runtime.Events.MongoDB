@@ -80,7 +80,9 @@ namespace Dolittle.Runtime.Events.Processing.MongoDB
         {
             if (_disposed)
             {
+#pragma warning disable DL0008
                 throw new ObjectDisposedException("Attempt to use storage after it has been disposed.");
+#pragma warning restore DL0008
             }
 
             try
