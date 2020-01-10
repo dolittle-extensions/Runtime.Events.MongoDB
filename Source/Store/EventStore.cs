@@ -58,7 +58,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                         }
                         else
                         {
-                            throw new EventSourceConcurrencyConflict(result.ToEventSourceVersion(), uncommittedEvents.Source.Version);
+                            throw new EventSourceConcurrencyConflict(result[Constants.ERROR].AsBsonDocument.ToEventSourceVersion(), uncommittedEvents.Source.Version);
                         }
                     }
                     else
@@ -140,7 +140,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         protected virtual T Do<T>(Func<T> callback)
         {
             T results = default;
-            Do(() => results = callback());
+            Do(() => { results = callback(); });
             return results;
         }
 
