@@ -68,7 +68,7 @@ namespace Dolittle.Runtime.Events.Processing.MongoDB
         protected virtual T Do<T>(Func<T> callback)
         {
             T results = default;
-            Do(() => results = callback());
+            Do(() => { results = callback(); });
             return results;
         }
 
