@@ -24,7 +24,7 @@ namespace Dolittle.Runtime.Events.Specs.MongoDB
 
         public a_mongo_db_connection()
         {
-            _runner = MongoDbRunner.Start();
+            _runner = MongoDbRunner.Start(additionalMongodArguments: "--quiet --syslog");
             var configurationForMock = new Mock<IConfigurationFor<EventStoreConfiguration>>();
             configurationForMock.Setup(_ => _.Instance).Returns(new EventStoreConfiguration
             {
