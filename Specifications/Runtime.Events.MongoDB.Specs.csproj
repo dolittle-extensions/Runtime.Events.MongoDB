@@ -15,14 +15,14 @@
   </ItemGroup>
 
  <ItemGroup>
-    <PackageReference Include="Dolittle.Artifacts" Version="4.*" />
-    <PackageReference Include="Dolittle.Time" Version="4.*" />
+    <!-- <PackageReference Include="Dolittle.Artifacts" Version="4.*" />
+    <PackageReference Include="Dolittle.Time" Version="4.*" /> -->
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Mongo2Go" Version="2.2.11" />
+    <!-- <PackageReference Include="Mongo2Go" Version="2.2.11" />
     <PackageReference Include="MongoDB.Bson" Version="2.8.1" />
     <PackageReference Include="MongoDB.Driver" Version="2.8.1" />
-    <PackageReference Include="MongoDB.Driver.Core" Version="2.8.1" />
+    <PackageReference Include="MongoDB.Driver.Core" Version="2.8.1" /> -->
   </ItemGroup>
 </Project>
