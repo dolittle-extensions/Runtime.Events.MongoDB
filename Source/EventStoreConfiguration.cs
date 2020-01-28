@@ -1,7 +1,9 @@
 // Copyright (c) Dolittle. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Dolittle.Runtime.Events.MongoDB
+using System.Collections.Generic;
+
+namespace Dolittle.Runtime.Events.Store.MongoDB
 {
     /// <summary>
     /// Represents a resource configuration for a MongoDB Read model implementation.
@@ -9,23 +11,13 @@ namespace Dolittle.Runtime.Events.MongoDB
     public class EventStoreConfiguration
     {
         /// <summary>
-        /// Gets or sets the Database name.
+        /// Gets or sets the MongoDB servers.
+        /// </summary>
+        public IEnumerable<string> Servers { get; set; }
+
+        /// <summary>
+        /// Gets or sets the database name.
         /// </summary>
         public string Database { get; set; }
-
-        /// <summary>
-        /// Gets or sets the connection string for the configuration.
-        /// </summary>
-        public string ConnectionString { get; set; }
-
-        /// <summary>
-        /// Gets or sets the Host String.
-        /// </summary>
-        public string Host { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether or not to use SSL.
-        /// </summary>
-        public bool UseSSL { get; set; }
     }
 }

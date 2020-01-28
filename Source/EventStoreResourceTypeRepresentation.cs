@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using Dolittle.ResourceTypes;
 
-namespace Dolittle.Runtime.Events.MongoDB
+namespace Dolittle.Runtime.Events.Store.MongoDB
 {
     /// <inheritdoc/>
     public class EventStoreResourceTypeRepresentation : IRepresentAResourceType
@@ -13,8 +13,6 @@ namespace Dolittle.Runtime.Events.MongoDB
         static readonly IDictionary<Type, Type> _bindings = new Dictionary<Type, Type>
         {
             { typeof(Dolittle.Runtime.Events.Store.IEventStore), typeof(Store.MongoDB.EventStore) },
-            { typeof(Dolittle.Runtime.Events.Relativity.IGeodesics), typeof(Relativity.MongoDB.Geodesics) },
-            { typeof(Dolittle.Runtime.Events.Processing.IEventProcessorOffsetRepository), typeof(Processing.MongoDB.EventProcessorOffsetRepository) }
         };
 
         /// <inheritdoc/>
