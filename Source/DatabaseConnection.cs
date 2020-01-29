@@ -3,6 +3,7 @@
 
 using System.Linq;
 using Dolittle.ResourceTypes.Configuration;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
@@ -22,7 +23,9 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             var settings = new MongoClientSettings
             {
                 Servers = config.Servers.Select(_ => new MongoServerAddress(_)),
+                GuidRepresentation = GuidRepresentation.Standard,
             };
+
             MongoClient = new MongoClient(settings.Freeze());
             Database = MongoClient.GetDatabase(config.Database);
         }
