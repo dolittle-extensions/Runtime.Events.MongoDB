@@ -4,6 +4,7 @@
 using Dolittle.Lifecycle;
 using Dolittle.Logging;
 using Dolittle.Runtime.Events.Store.MongoDB.Aggregates;
+using Dolittle.Runtime.Events.Store.MongoDB.EventLog;
 using MongoDB.Driver;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
@@ -28,9 +29,11 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             _logger = logger;
 
             MongoClient = connection.MongoClient;
-            Aggregates = connection.Database.GetCollection<AggregateRoot>("aggregates");
 
-            CreateIndices();
+            EventLog = connection.Database.GetCollection<Event>(Constants.EventLogCollection);
+            Aggregates = connection.Database.GetCollection<AggregateRoot>(Constants.AggregateRootInstanceCollection);
+
+            CreateCollectionsAndIndexes();
         }
 
         /// <summary>
@@ -39,19 +42,39 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         public IMongoClient MongoClient { get; }
 
         /// <summary>
+        /// Gets the <see cref="IMongoCollection{Event}"/> where Events are stored.
+        /// </summary>
+        public IMongoCollection<Event> EventLog { get; }
+
+        /// <summary>
         /// Gets the <see cref="IMongoCollection{AggregateRoot}"/> where Aggregate Roots are stored.
         /// </summary>
         public IMongoCollection<AggregateRoot> Aggregates { get; }
 
-        void CreateIndices()
+        void CreateCollectionsAndIndexes()
         {
-            CreateAggregateIndices();
+            CreateCollectionsAndIndexesForEventLog();
+            CreateCollectionsAndIndexesForAggregates();
         }
 
-        void CreateAggregateIndices()
+        void CreateCollectionsAndIndexesForEventLog()
+        {
+            EventLog.Indexes.CreateOne(new CreateIndexModel<Event>(
+                Builders<Event>.IndexKeys
+                    .Ascending(_ => _.Aggregate.EventSourceId)));
+
+            EventLog.Indexes.CreateOne(new CreateIndexModel<Event>(
+                Builders<Event>.IndexKeys
+                    .Ascending(_ => _.Aggregate.EventSourceId)
+                    .Ascending(_ => _.Aggregate.TypeId)));
+        }
+
+        void CreateCollectionsAndIndexesForAggregates()
         {
             Aggregates.Indexes.CreateOne(new CreateIndexModel<AggregateRoot>(
-                Builders<AggregateRoot>.IndexKeys.Ascending(_ => _.EventSource).Ascending(_ => _.AggregateType),
+                Builders<AggregateRoot>.IndexKeys
+                    .Ascending(_ => _.EventSource)
+                    .Ascending(_ => _.AggregateType),
                 new CreateIndexOptions
                 {
                     Unique = true,
