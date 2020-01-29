@@ -75,7 +75,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// <param name="event">The <see cref="UncommittedEvent"/> to commit.</param>
         /// <param name="committedEvent">The <see cref="CommittedAggregateEvent"/> that has been written to the event log.</param>
         /// <returns>A value indicating whether the commit operation was successful.</returns>
-        public bool CommitAggregateEvent(EventSourceId eventSource, Artifact aggregateRoot, AggregateRootVersion aggregateRootVersion, EventLogVersion version, DateTimeOffset occured, UncommittedEvent @event, out CommittedAggregateEvent committedEvent)
+        public bool TryCommitAggregateEvent(EventSourceId eventSource, Artifact aggregateRoot, AggregateRootVersion aggregateRootVersion, EventLogVersion version, DateTimeOffset occured, UncommittedEvent @event, out CommittedAggregateEvent committedEvent)
         {
             if (InsertEvent(version, occured, @event, new AggregateMetadata
             {

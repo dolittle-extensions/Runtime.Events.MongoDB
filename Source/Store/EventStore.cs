@@ -36,7 +36,36 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// <inheritdoc/>
         public CommittedEvents CommitEvents(UncommittedEvents events)
         {
-            throw new System.NotImplementedException();
+            try
+            {
+                using var session = _connection.MongoClient.StartSession();
+                return session.WithTransaction((transaction, cancel) =>
+                {
+                    var eventLogVersion = (uint)_connection.EventLog.CountDocuments(transaction, Builders<Event>.Filter.Empty);
+
+                    var committedEvents = new List<CommittedEvent>();
+                    var eventCommitter = new EventCommitter(transaction, _connection.EventLog, new Cause(CauseType.Command, 0), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+
+                    foreach (var @event in events)
+                    {
+                        if (eventCommitter.TryCommitEvent(eventLogVersion, DateTimeOffset.Now, @event, out var committedEvent))
+                        {
+                            committedEvents.Add(committedEvent);
+                            eventLogVersion++;
+                        }
+                        else
+                        {
+                            throw new EventLogDuplicateKeyError(eventLogVersion);
+                        }
+                    }
+
+                    return new CommittedEvents(committedEvents);
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new EventStorePersistenceError("Error persisting event to MongoDB event store", ex);
+            }
         }
 
         /// <inheritdoc/>
@@ -45,8 +74,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             try
             {
                 using var session = _connection.MongoClient.StartSession();
-                return session.WithTransaction(
-                (transaction, cancel) =>
+                return session.WithTransaction((transaction, cancel) =>
                 {
                     var eventLogVersion = (uint)_connection.EventLog.CountDocuments(transaction, Builders<Event>.Filter.Empty);
                     var aggregateRootVersion = events.ExpectedAggregateRootVersion.Value;
@@ -56,7 +84,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
                     foreach (var @event in events)
                     {
-                        if (eventCommitter.CommitAggregateEvent(events.EventSource, events.AggregateRoot, aggregateRootVersion, eventLogVersion, DateTimeOffset.Now, @event, out var committedEvent))
+                        if (eventCommitter.TryCommitAggregateEvent(events.EventSource, events.AggregateRoot, aggregateRootVersion, eventLogVersion, DateTimeOffset.Now, @event, out var committedEvent))
                         {
                             committedEvents.Add(committedEvent);
                             eventLogVersion++;
@@ -83,7 +111,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                     {
                         throw new AggregateRootConcurrencyConflict(0, 0);
                     }
-                }, new TransactionOptions(maxCommitTime: TimeSpan.FromSeconds(5)));
+                });
             }
             catch (AggregateRootConcurrencyConflict)
             {
