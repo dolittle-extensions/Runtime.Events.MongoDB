@@ -90,6 +90,10 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                 var currentVersion = FetchAggregateRootVersion(events.EventSource, events.AggregateRoot.Id);
                 throw new AggregateRootConcurrencyConflict(currentVersion, events.ExpectedAggregateRootVersion);
             }
+            catch (Exception ex)
+            {
+                throw new EventStorePersistenceError("Error persisting event to MongoDB event store", ex);
+            }
         }
 
         /// <inheritdoc/>
