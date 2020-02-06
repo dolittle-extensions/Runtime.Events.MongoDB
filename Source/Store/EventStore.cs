@@ -127,7 +127,34 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// <inheritdoc/>
         public CommittedAggregateEvents FetchForAggregate(EventSourceId eventSource, ArtifactId aggregateRoot)
         {
-            throw new System.NotImplementedException();
+            var version = FetchAggregateRootVersion(eventSource, aggregateRoot);
+            if (version > AggregateRootVersion.Initial)
+            {
+                var filter = Builders<Event>.Filter;
+
+                var events = _connection.EventLog
+                    .Find(filter.Eq(_ => _.Aggregate.WasAppliedByAggregate, true) & filter.Eq(_ => _.Aggregate.EventSourceId, eventSource.Value) & filter.Eq(_ => _.Aggregate.TypeId, aggregateRoot.Value) & filter.Lte(_ => _.Aggregate.Version, version.Value))
+                    .Sort(Builders<Event>.Sort.Ascending(_ => _.Aggregate.Version))
+                    .Project(_ => new CommittedAggregateEvent(
+                        _.Aggregate.EventSourceId,
+                        new Artifact(_.Aggregate.TypeId, _.Aggregate.TypeGeneration),
+                        _.Aggregate.Version,
+                        _.EventLogVersion,
+                        _.Metadata.Occured,
+                        _.Metadata.Correlation,
+                        _.Metadata.Microservice,
+                        _.Metadata.Tenant,
+                        new Cause(_.Metadata.CauseType, _.Metadata.CausePosition),
+                        new Artifact(_.Metadata.TypeId, _.Metadata.TypeGeneration),
+                        _.Content))
+                    .ToList();
+
+                return new CommittedAggregateEvents(eventSource, new Artifact(aggregateRoot, ArtifactGeneration.First), version, events);
+            }
+            else
+            {
+                return new CommittedAggregateEvents(eventSource, new Artifact(aggregateRoot, ArtifactGeneration.First), AggregateRootVersion.Initial, Array.Empty<CommittedAggregateEvent>());
+            }
         }
 
         /// <inheritdoc/>
