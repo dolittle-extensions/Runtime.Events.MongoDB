@@ -46,15 +46,15 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// Commits a single <see cref="UncommittedEvent"/> to the event log.
         /// </summary>
         /// <param name="version">The expected next <see cref="EventLogVersion"/> of the event log.</param>
-        /// <param name="occured">The <see cref="DateTimeOffset"/> when the event occured.</param>
+        /// <param name="occurred">The <see cref="DateTimeOffset"/> when the event occured.</param>
         /// <param name="event">The <see cref="UncommittedEvent"/> to commit.</param>
         /// <param name="committedEvent">The <see cref="CommittedEvent"/> that has been written to the event log.</param>
         /// <returns>A value indicating whether the commit operation was successful.</returns>
-        public bool TryCommitEvent(EventLogVersion version, DateTimeOffset occured, UncommittedEvent @event, out CommittedEvent committedEvent)
+        public bool TryCommitEvent(EventLogVersion version, DateTimeOffset occurred, UncommittedEvent @event, out CommittedEvent committedEvent)
         {
-            if (InsertEvent(version, occured, @event, new AggregateMetadata()))
+            if (InsertEvent(version, occurred, @event, new AggregateMetadata()))
             {
-                committedEvent = new CommittedEvent(version, occured, _correlation, _microservice, _tenant, _cause, @event.Type, @event.Content);
+                committedEvent = new CommittedEvent(version, occurred, _correlation, _microservice, _tenant, _cause, @event.Type, @event.Content);
                 return true;
             }
             else
@@ -105,7 +105,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                     EventLogVersion = version,
                     Metadata = new EventMetadata
                     {
-                        Occured = occured,
+                        Occurred = occured,
                         Correlation = _correlation,
                         Microservice = _microservice,
                         Tenant = _tenant,

@@ -6,6 +6,7 @@ using Dolittle.Logging;
 using Dolittle.Runtime.Events.Processing;
 using Dolittle.Runtime.Events.Store.MongoDB.Aggregates;
 using Dolittle.Runtime.Events.Store.MongoDB.EventLog;
+using Dolittle.Runtime.Events.Store.MongoDB.Streams;
 using MongoDB.Driver;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
@@ -53,13 +54,19 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         public IMongoCollection<AggregateRoot> Aggregates { get; }
 
         /// <summary>
-        /// Gets the <see cref="IMongoCollection{StreamProcessorState}" /> where <see cref="StreamProcessorState" >stream processor states</see> are store.
+        /// Gets the <see cref="IMongoCollection{StreamProcessorState}" /> where <see cref="StreamProcessorState" >stream processor states</see> are stored.
         /// </summary>
         public IMongoCollection<StreamProcessorState> StreamProcessorStates { get; }
+
+        /// <summary>
+        /// Gets the <see cref="IMongoCollection{StreamEvent}" /> where <see cref="StreamEvent" >stream events</see> are stored.
+        /// </summary>
+        public IMongoCollection<StreamEvent> StreamEvents { get; }
 
         void CreateCollectionsAndIndexes()
         {
             CreateCollectionsAndIndexesForEventLog();
+            CreateCollectionsAndIndexesForStreamEvents();
             CreateCollectionsAndIndexesForAggregates();
         }
 
@@ -73,6 +80,22 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                 Builders<Event>.IndexKeys
                     .Ascending(_ => _.Aggregate.EventSourceId)
                     .Ascending(_ => _.Aggregate.TypeId)));
+        }
+
+        void CreateCollectionsAndIndexesForStreamEvents()
+        {
+            StreamEvents.Indexes.CreateOne(new CreateIndexModel<StreamEvent>(
+                Builders<StreamEvent>.IndexKeys
+                    .Ascending(_ => _.StreamIdAndPosition)));
+
+            StreamEvents.Indexes.CreateOne(new CreateIndexModel<StreamEvent>(
+                Builders<StreamEvent>.IndexKeys
+                    .Ascending(_ => _.StreamIdAndPosition.StreamId)));
+
+            StreamEvents.Indexes.CreateOne(new CreateIndexModel<StreamEvent>(
+                Builders<StreamEvent>.IndexKeys
+                    .Ascending(_ => _.StreamIdAndPosition)
+                    .Ascending(_ => _.PartitionId)));
         }
 
         void CreateCollectionsAndIndexesForAggregates()

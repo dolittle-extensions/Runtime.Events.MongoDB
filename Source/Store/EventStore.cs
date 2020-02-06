@@ -80,6 +80,8 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                     var aggregateRootVersion = events.ExpectedAggregateRootVersion.Value;
 
                     var committedEvents = new List<CommittedAggregateEvent>();
+
+                    // TODO: add execution context stuff...
                     var eventCommitter = new EventCommitter(transaction, _connection.EventLog, new Cause(CauseType.Command, 0), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
 
                     foreach (var @event in events)
@@ -105,7 +107,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
                     if (committer.TryIncrementVersionTo(aggregateRootVersion))
                     {
-                        return new CommittedAggregateEvents(events.EventSource, events.AggregateRoot, events.ExpectedAggregateRootVersion, committedEvents);
+                        return new CommittedAggregateEvents(events.EventSource, events.AggregateRoot.Id, events.ExpectedAggregateRootVersion, committedEvents);
                     }
                     else
                     {
@@ -140,7 +142,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                         new Artifact(_.Aggregate.TypeId, _.Aggregate.TypeGeneration),
                         _.Aggregate.Version,
                         _.EventLogVersion,
-                        _.Metadata.Occured,
+                        _.Metadata.Occurred,
                         _.Metadata.Correlation,
                         _.Metadata.Microservice,
                         _.Metadata.Tenant,
@@ -149,11 +151,11 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                         _.Content))
                     .ToList();
 
-                return new CommittedAggregateEvents(eventSource, new Artifact(aggregateRoot, ArtifactGeneration.First), version, events);
+                return new CommittedAggregateEvents(eventSource, aggregateRoot, version, events);
             }
             else
             {
-                return new CommittedAggregateEvents(eventSource, new Artifact(aggregateRoot, ArtifactGeneration.First), AggregateRootVersion.Initial, Array.Empty<CommittedAggregateEvent>());
+                return new CommittedAggregateEvents(eventSource, aggregateRoot, AggregateRootVersion.Initial, Array.Empty<CommittedAggregateEvent>());
             }
         }
 

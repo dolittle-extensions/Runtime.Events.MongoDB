@@ -18,7 +18,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.EventLog
         /// <summary>
         /// Gets or sets the <see cref="DateTimeOffset"/> of when the event was committed to the event store.
         /// </summary>
-        public DateTimeOffset Occured { get; set; }
+        public DateTimeOffset Occurred { get; set; }
 
         /// <summary>
         /// Gets or sets the <see cref="CorrelationId"/> of the event.
