@@ -98,6 +98,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         bool UpdateExistingAggregateRootDocument(AggregateRootVersion nextVersion)
         {
             var filter = Builders<AggregateRoot>.Filter;
+
             var result = _aggregates.UpdateOne(
                 _transaction,
                 filter.Eq(_ => _.EventSource, _eventSource.Value) & filter.Eq(_ => _.AggregateType, _aggregateRoot.Value) & filter.Eq(_ => _.Version, _expectedVersion.Value),
