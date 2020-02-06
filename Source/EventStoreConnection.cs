@@ -3,6 +3,7 @@
 
 using Dolittle.Lifecycle;
 using Dolittle.Logging;
+using Dolittle.Runtime.Events.Processing;
 using Dolittle.Runtime.Events.Store.MongoDB.Aggregates;
 using MongoDB.Driver;
 
@@ -43,6 +44,11 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// </summary>
         public IMongoCollection<AggregateRoot> Aggregates { get; }
 
+        /// <summary>
+        /// Gets the <see cref="IMongoCollection{StreamProcessorState}" /> where <see cref="StreamProcessorState" >stream processor states</see> are store. 
+        /// </summary>
+        public IMongoCollection<StreamProcessorState> StreamProcessorStates { get; }
+        
         void CreateIndices()
         {
             CreateAggregateIndices();
