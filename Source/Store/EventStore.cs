@@ -115,7 +115,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
                     if (committer.TryIncrementVersionTo(aggregateRootVersion))
                     {
-                        return new CommittedAggregateEvents(events.EventSource, events.AggregateRoot.Id, events.ExpectedAggregateRootVersion, committedEvents);
+                        return new CommittedAggregateEvents(events.EventSource, events.AggregateRoot.Id, aggregateRootVersion, committedEvents);
                     }
                     else
                     {

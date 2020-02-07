@@ -33,8 +33,9 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             MongoClient = connection.MongoClient;
 
             EventLog = connection.Database.GetCollection<Event>(Constants.EventLogCollection);
-            StreamEvents = connection.Database.GetCollection<StreamEvent>(Constants.StreamEventCollection);
             Aggregates = connection.Database.GetCollection<AggregateRoot>(Constants.AggregateRootInstanceCollection);
+            StreamProcessorStates = connection.Database.GetCollection<StreamProcessorState>(Constants.StreamProcessorStateCollection);
+            StreamEvents = connection.Database.GetCollection<StreamEvent>(Constants.StreamEventCollection);
 
             CreateCollectionsAndIndexes();
         }
@@ -113,8 +114,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         {
             StreamProcessorStates.Indexes.CreateOne(new CreateIndexModel<StreamProcessorState>(
                 Builders<StreamProcessorState>.IndexKeys
-                    .Ascending(_ => _.Id),
-                new CreateIndexOptions { Unique = true }));
+                    .Ascending(_ => _.Id)));
         }
     }
 }
