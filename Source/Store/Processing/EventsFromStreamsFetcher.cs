@@ -4,6 +4,7 @@
 using System.Threading.Tasks;
 using Dolittle.Logging;
 using Dolittle.Runtime.Events.Processing;
+using Dolittle.Runtime.Events.Store.MongoDB.EventLog;
 using Dolittle.Runtime.Events.Store.MongoDB.Streams;
 using MongoDB.Driver;
 
@@ -30,7 +31,31 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
         }
 
         /// <inheritdoc/>
-        public async Task<CommittedEventWithPartition> Fetch(StreamId streamId, StreamPosition streamPosition)
+        public Task<CommittedEventWithPartition> Fetch(StreamId streamId, StreamPosition streamPosition)
+        {
+            if (streamId == StreamId.AllStreamId) return FetchFromEventLog(streamPosition);
+            else return FetchFromStreamEvents(streamId, streamPosition);
+        }
+
+        /// <inheritdoc/>
+        public Task<StreamPosition> FindNext(StreamId streamId, PartitionId partitionId, StreamPosition fromPosition)
+        {
+            if (streamId == StreamId.AllStreamId) return FindNextInEventLog(fromPosition);
+            else return FindNextInEventStreams(streamId, partitionId, fromPosition);
+        }
+
+        async Task<CommittedEventWithPartition> FetchFromEventLog(StreamPosition streamPosition)
+        {
+            var committedEventWithPartition = await _connection.EventLog.Find(
+                Builders<Event>.Filter.Eq(_ => _.EventLogVersion, streamPosition.Value))
+                .Project(_ => _.ToCommittedEvenWithPartitiont(PartitionId.NotSet))
+                .FirstOrDefaultAsync()
+                .ConfigureAwait(false);
+            if (committedEventWithPartition == default) throw new NoEventInStreamAtPosition(StreamId.AllStreamId, streamPosition);
+            return committedEventWithPartition;
+        }
+
+        async Task<CommittedEventWithPartition> FetchFromStreamEvents(StreamId streamId, StreamPosition streamPosition)
         {
             var committedEventWithPartition = await _connection.StreamEvents.Find(
                 _streamEventFilter.Eq(_ => _.StreamIdAndPosition, new StreamIdAndPosition(streamId, streamPosition)))
@@ -41,8 +66,16 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
             return committedEventWithPartition;
         }
 
-        /// <inheritdoc/>
-        public async Task<StreamPosition> FindNext(StreamId streamId, PartitionId partitionId, StreamPosition fromPosition)
+        async Task<StreamPosition> FindNextInEventLog(StreamPosition fromPosition)
+        {
+            var @event = await _connection.EventLog.Find(
+                Builders<Event>.Filter.Eq(_ => _.EventLogVersion, fromPosition.Value))
+                .FirstOrDefaultAsync()
+                .ConfigureAwait(false);
+            return @event != default ? @event.EventLogVersion : uint.MaxValue;
+        }
+
+        async Task<StreamPosition> FindNextInEventStreams(StreamId streamId, PartitionId partitionId, StreamPosition fromPosition)
         {
             var streamEvent = await _connection.StreamEvents.Find(
                 _streamEventFilter.Eq(_ => _.StreamIdAndPosition.StreamId, streamId.Value)
@@ -50,8 +83,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
                 & _streamEventFilter.Gte(_ => _.StreamIdAndPosition.Position, fromPosition.Value))
                 .FirstOrDefaultAsync()
                 .ConfigureAwait(false);
-            if (streamEvent == default) return uint.MaxValue;
-            return streamEvent.StreamIdAndPosition.Position;
+            return streamEvent != default ? streamEvent.StreamIdAndPosition.Position : uint.MaxValue;
         }
     }
 }

@@ -4,13 +4,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Dolittle.Applications;
 using Dolittle.Artifacts;
+using Dolittle.Execution;
 using Dolittle.Logging;
 using Dolittle.Runtime.Events.Store.MongoDB.Aggregates;
 using Dolittle.Runtime.Events.Store.MongoDB.EventLog;
+using Dolittle.Tenancy;
 using MongoDB.Driver;
-
-#pragma warning disable DL0008
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
 {
@@ -21,18 +22,29 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
     {
         readonly FilterDefinitionBuilder<Event> _eventFilter = Builders<Event>.Filter;
         readonly FilterDefinitionBuilder<AggregateRoot> _aggregateFilter = Builders<AggregateRoot>.Filter;
+        readonly IExecutionContextManager _executionContextManager;
         readonly EventStoreConnection _connection;
+        readonly CorrelationId _correlationId;
+        readonly Microservice _microservice;
+        readonly TenantId _tenant;
         readonly ILogger _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventStore"/> class.
         /// </summary>
+        /// <param name="executionContextManager">The <see cref="IExecutionContextManager" />.</param>
         /// <param name="connection">An <see cref="EventStoreConnection"/> to a MongoDB EventStore.</param>
         /// <param name="logger">An <see cref="ILogger"/>.</param>
-        public EventStore(EventStoreConnection connection, ILogger logger)
+        public EventStore(IExecutionContextManager executionContextManager, EventStoreConnection connection, ILogger logger)
         {
+            _executionContextManager = executionContextManager;
             _connection = connection;
             _logger = logger;
+
+            var execution = _executionContextManager.Current;
+            _correlationId = execution.CorrelationId;
+            _microservice = execution.BoundedContext.Value;
+            _tenant = execution.Tenant;
         }
 
         /// <inheritdoc/>
@@ -46,7 +58,13 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                     var eventLogVersion = (uint)_connection.EventLog.CountDocuments(transaction, Builders<Event>.Filter.Empty);
 
                     var committedEvents = new List<CommittedEvent>();
-                    var eventCommitter = new EventCommitter(transaction, _connection.EventLog, new Cause(CauseType.Command, 0), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+                    var eventCommitter = new EventCommitter(
+                        transaction,
+                        _connection.EventLog,
+                        new Cause(CauseType.Command, 0),
+                        _correlationId,
+                        _microservice,
+                        _tenant);
 
                     foreach (var @event in events)
                     {
@@ -83,14 +101,13 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
                     var committedEvents = new List<CommittedAggregateEvent>();
 
-                    // TODO: add execution context stuff...
                     var eventCommitter = new EventCommitter(
                         transaction,
                         _connection.EventLog,
                         new Cause(CauseType.Command, 0),
-                        Guid.NewGuid(),
-                        Guid.NewGuid(),
-                        Guid.NewGuid());
+                        _correlationId,
+                        _microservice,
+                        _tenant);
 
                     foreach (var @event in events)
                     {

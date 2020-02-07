@@ -43,7 +43,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
             {
                 var states = _connection.StreamProcessorStates;
                 var state = await states.Find(
-                    _streamProcessorFilter.Eq(_ => _.Id.ToRuntimeRepresentation(), streamProcessorId))
+                    _streamProcessorFilter.Eq(_ => _.Id, new StreamProcessorId(streamProcessorId.EventProcessorId, streamProcessorId.SourceStreamId)))
                     .FirstOrDefaultAsync()
                     .ConfigureAwait(false);
                 if (state == default) state = StreamProcessorState.NewFromId(streamProcessorId);
@@ -66,10 +66,19 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
             {
                 var states = _connection.StreamProcessorStates;
                 var state = await states.Find(
-                    _streamProcessorFilter.Eq(_ => _.Id.ToRuntimeRepresentation(), streamProcessorId))
+                    _streamProcessorFilter.Eq(_ => _.Id, new StreamProcessorId(streamProcessorId.EventProcessorId, streamProcessorId.SourceStreamId)))
                     .FirstOrDefaultAsync()
                     .ConfigureAwait(false);
                 if (state == default) throw new StreamProcessorNotFound(streamProcessorId);
+
+                state.Position++;
+
+                var replaceResult = await states.ReplaceOneAsync(
+                    _streamProcessorFilter.Eq(_ => _.Id, new StreamProcessorId(streamProcessorId.EventProcessorId, streamProcessorId.SourceStreamId)),
+                    state)
+                    .ConfigureAwait(false);
+
+                if (replaceResult.MatchedCount == 0) throw new StreamProcessorNotFound(streamProcessorId);
 
                 return state.ToRuntimeRepresentation();
             }
@@ -87,7 +96,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
             {
                 var states = _connection.StreamProcessorStates;
                 var state = await states.Find(
-                    _streamProcessorFilter.Eq(_ => _.Id.ToRuntimeRepresentation(), streamProcessorId))
+                    _streamProcessorFilter.Eq(_ => _.Id, new StreamProcessorId(streamProcessorId.EventProcessorId, streamProcessorId.SourceStreamId)))
                     .FirstOrDefaultAsync()
                     .ConfigureAwait(false);
                 if (state == default) throw new StreamProcessorNotFound(streamProcessorId);
@@ -95,7 +104,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
                 if (state.FailingPartitions.ContainsKey(partitionId)) throw new FailingPartitionAlreadyExists(streamProcessorId, partitionId);
 
                 state = await states.FindOneAndUpdateAsync(
-                    _streamProcessorFilter.Eq(_ => _.Id.ToRuntimeRepresentation(), streamProcessorId),
+                    _streamProcessorFilter.Eq(_ => _.Id, new StreamProcessorId(streamProcessorId.EventProcessorId, streamProcessorId.SourceStreamId)),
                     _streamProcessorUpdate.AddToSet(_ => _.FailingPartitions, new KeyValuePair<Guid, FailingPartitionState>(partitionId, new FailingPartitionState(position, retryTime))),
                     new FindOneAndUpdateOptions<StreamProcessorState, StreamProcessorState> { ReturnDocument = ReturnDocument.After })
                     .ConfigureAwait(false);
@@ -116,7 +125,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
             {
                 var states = _connection.StreamProcessorStates;
                 var state = await states.Find(
-                    _streamProcessorFilter.Eq(_ => _.Id.ToRuntimeRepresentation(), streamProcessorId))
+                    _streamProcessorFilter.Eq(_ => _.Id, new StreamProcessorId(streamProcessorId.EventProcessorId, streamProcessorId.SourceStreamId)))
                     .FirstOrDefaultAsync()
                     .ConfigureAwait(false);
                 if (state == default) throw new StreamProcessorNotFound(streamProcessorId);
@@ -125,7 +134,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
 
                 state.FailingPartitions.Remove(partitionId);
                 var replaceResult = await states.ReplaceOneAsync(
-                    _streamProcessorFilter.Eq(_ => _.Id.ToRuntimeRepresentation(), streamProcessorId),
+                    _streamProcessorFilter.Eq(_ => _.Id, new StreamProcessorId(streamProcessorId.EventProcessorId, streamProcessorId.SourceStreamId)),
                     state)
                     .ConfigureAwait(false);
 
@@ -147,7 +156,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
             {
                 var states = _connection.StreamProcessorStates;
                 var state = await states.Find(
-                    _streamProcessorFilter.Eq(_ => _.Id.ToRuntimeRepresentation(), streamProcessorId))
+                    _streamProcessorFilter.Eq(_ => _.Id, new StreamProcessorId(streamProcessorId.EventProcessorId, streamProcessorId.SourceStreamId)))
                     .FirstOrDefaultAsync()
                     .ConfigureAwait(false);
                 if (state == default) throw new StreamProcessorNotFound(streamProcessorId);
@@ -157,7 +166,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
                 state.FailingPartitions[partitionId] = new FailingPartitionState(failingPartitionState.Position, failingPartitionState.RetryTime);
 
                 var replaceResult = await states.ReplaceOneAsync(
-                    _streamProcessorFilter.Eq(_ => _.Id.ToRuntimeRepresentation(), streamProcessorId),
+                    _streamProcessorFilter.Eq(_ => _.Id, new StreamProcessorId(streamProcessorId.EventProcessorId, streamProcessorId.SourceStreamId)),
                     state)
                     .ConfigureAwait(false);
 
