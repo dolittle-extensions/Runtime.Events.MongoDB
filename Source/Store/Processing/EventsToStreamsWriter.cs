@@ -15,6 +15,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
     /// </summary>
     public class EventsToStreamsWriter : IWriteEventsToStreams
     {
+        readonly FilterDefinitionBuilder<StreamEvent> _streamEventFilter = Builders<StreamEvent>.Filter;
         readonly EventStoreConnection _connection;
         readonly ILogger _logger;
 
@@ -40,20 +41,22 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
                     var events = _connection.StreamEvents;
                     var streamPosition = (uint)events.CountDocuments(
                         transaction,
-                        Builders<StreamEvent>.Filter.Eq(_ => _.StreamIdAndPosition.StreamId, streamId.Value));
+                        _streamEventFilter.Eq(_ => _.StreamIdAndPosition.StreamId, streamId.Value));
 
                     await events.InsertOneAsync(
                         transaction,
                         @event.ToStreamEvent(streamId, streamPosition, partitionId),
                         null,
-                        cancel).ConfigureAwait(false);
+                        cancel)
+                        .ConfigureAwait(false);
 
                     return true;
                  }).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                throw new EventStorePersistenceError("Error persisting event to MongoDB event store", ex);
+                _logger.Error($"Error persisting event '{@event.Type.Id.Value}' to stream '{streamId.Value}' in partition '{partitionId.Value}' - Error {ex}");
+                return false;
             }
         }
     }

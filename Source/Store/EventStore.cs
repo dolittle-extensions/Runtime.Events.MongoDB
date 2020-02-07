@@ -19,6 +19,8 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
     /// </summary>
     public class EventStore : IEventStore
     {
+        readonly FilterDefinitionBuilder<Event> _eventFilter = Builders<Event>.Filter;
+        readonly FilterDefinitionBuilder<AggregateRoot> _aggregateFilter = Builders<AggregateRoot>.Filter;
         readonly EventStoreConnection _connection;
         readonly ILogger _logger;
 
@@ -76,7 +78,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                 using var session = _connection.MongoClient.StartSession();
                 return session.WithTransaction((transaction, cancel) =>
                 {
-                    var eventLogVersion = (uint)_connection.EventLog.CountDocuments(transaction, Builders<Event>.Filter.Empty);
+                    var eventLogVersion = (uint)_connection.EventLog.CountDocuments(transaction, _eventFilter.Empty);
                     var aggregateRootVersion = events.ExpectedAggregateRootVersion.Value;
 
                     var committedEvents = new List<CommittedAggregateEvent>();
@@ -138,13 +140,11 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             var version = FetchAggregateRootVersion(eventSource, aggregateRoot);
             if (version > AggregateRootVersion.Initial)
             {
-                var filter = Builders<Event>.Filter;
-
                 var events = _connection.EventLog
-                    .Find(filter.Eq(_ => _.Aggregate.WasAppliedByAggregate, true)
-                        & filter.Eq(_ => _.Aggregate.EventSourceId, eventSource.Value)
-                        & filter.Eq(_ => _.Aggregate.TypeId, aggregateRoot.Value)
-                        & filter.Lte(_ => _.Aggregate.Version, version.Value))
+                    .Find(_eventFilter.Eq(_ => _.Aggregate.WasAppliedByAggregate, true)
+                        & _eventFilter.Eq(_ => _.Aggregate.EventSourceId, eventSource.Value)
+                        & _eventFilter.Eq(_ => _.Aggregate.TypeId, aggregateRoot.Value)
+                        & _eventFilter.Lte(_ => _.Aggregate.Version, version.Value))
                     .Sort(Builders<Event>.Sort.Ascending(_ => _.Aggregate.Version))
                     .Project(_ => _.ToCommittedAggregateEvent())
                     .ToList();
@@ -164,9 +164,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
 
         AggregateRootVersion FetchAggregateRootVersion(EventSourceId eventSource, ArtifactId aggregateRoot)
         {
-            var filter = Builders<AggregateRoot>.Filter;
-
-            var aggregates = _connection.Aggregates.Find(filter.Eq(_ => _.EventSource, eventSource.Value) & filter.Eq(_ => _.AggregateType, aggregateRoot.Value)).ToList();
+            var aggregates = _connection.Aggregates.Find(_aggregateFilter.Eq(_ => _.EventSource, eventSource.Value) & _aggregateFilter.Eq(_ => _.AggregateType, aggregateRoot.Value)).ToList();
 
             return aggregates.Count switch
             {
