@@ -3,9 +3,9 @@
 
 using Dolittle.Lifecycle;
 using Dolittle.Logging;
-using Dolittle.Runtime.Events.Processing;
 using Dolittle.Runtime.Events.Store.MongoDB.Aggregates;
 using Dolittle.Runtime.Events.Store.MongoDB.EventLog;
+using Dolittle.Runtime.Events.Store.MongoDB.Processing;
 using Dolittle.Runtime.Events.Store.MongoDB.Streams;
 using MongoDB.Driver;
 
@@ -33,6 +33,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             MongoClient = connection.MongoClient;
 
             EventLog = connection.Database.GetCollection<Event>(Constants.EventLogCollection);
+            StreamEvents = connection.Database.GetCollection<StreamEvent>(Constants.StreamEventCollection);
             Aggregates = connection.Database.GetCollection<AggregateRoot>(Constants.AggregateRootInstanceCollection);
 
             CreateCollectionsAndIndexes();
@@ -68,6 +69,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             CreateCollectionsAndIndexesForEventLog();
             CreateCollectionsAndIndexesForStreamEvents();
             CreateCollectionsAndIndexesForAggregates();
+            CreateCollectionsAndIndexesForStreamProcessorStates();
         }
 
         void CreateCollectionsAndIndexesForEventLog()
@@ -104,10 +106,15 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                 Builders<AggregateRoot>.IndexKeys
                     .Ascending(_ => _.EventSource)
                     .Ascending(_ => _.AggregateType),
-                new CreateIndexOptions
-                {
-                    Unique = true,
-                }));
+                new CreateIndexOptions { Unique = true }));
+        }
+
+        void CreateCollectionsAndIndexesForStreamProcessorStates()
+        {
+            StreamProcessorStates.Indexes.CreateOne(new CreateIndexModel<StreamProcessorState>(
+                Builders<StreamProcessorState>.IndexKeys
+                    .Ascending(_ => _.Id),
+                new CreateIndexOptions { Unique = true }));
         }
     }
 }

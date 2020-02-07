@@ -54,7 +54,15 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         {
             if (InsertEvent(version, occurred, @event, new AggregateMetadata()))
             {
-                committedEvent = new CommittedEvent(version, occurred, _correlation, _microservice, _tenant, _cause, @event.Type, @event.Content);
+                committedEvent = new CommittedEvent(
+                    version,
+                    occurred,
+                    _correlation,
+                    _microservice,
+                    _tenant,
+                    _cause,
+                    @event.Type,
+                    @event.Content);
                 return true;
             }
             else
@@ -86,7 +94,18 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                 Version = aggregateRootVersion,
             }))
             {
-                committedEvent = new CommittedAggregateEvent(eventSource, aggregateRoot, aggregateRootVersion, version, occured, _correlation, _microservice, _tenant, _cause, @event.Type, @event.Content);
+                committedEvent = new CommittedAggregateEvent(
+                    eventSource,
+                    aggregateRoot,
+                    aggregateRootVersion,
+                    version,
+                    occured,
+                    _correlation,
+                    _microservice,
+                    _tenant,
+                    _cause,
+                    @event.Type,
+                    @event.Content);
                 return true;
             }
             else

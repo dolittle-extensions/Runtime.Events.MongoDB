@@ -13,10 +13,42 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Streams
     public class StreamEvent
     {
         /// <summary>
+        /// Initializes a new instance of the <see cref="StreamEvent"/> class.
+        /// </summary>
+        /// <param name="streamId">The stream id.</param>
+        /// <param name="position">The stream position.</param>
+        /// <param name="eventLogVersion">The event log version.</param>
+        /// <param name="partitionId">The partition id.</param>
+        /// <param name="metadata">The event metadata.</param>
+        /// <param name="aggregate">The event aggregate metadata.</param>
+        /// <param name="content">The content.</param>
+        public StreamEvent(
+            Guid streamId,
+            uint position,
+            uint eventLogVersion,
+            Guid partitionId,
+            EventMetadata metadata,
+            AggregateMetadata aggregate,
+            string content)
+        {
+            StreamIdAndPosition = new StreamIdAndPosition(streamId, position);
+            EventLogVersion = eventLogVersion;
+            PartitionId = partitionId;
+            Metadata = metadata;
+            Aggregate = aggregate;
+            Content = content;
+        }
+
+        /// <summary>
         /// Gets or sets the stream id and position.
         /// </summary>
         [BsonId]
         public StreamIdAndPosition StreamIdAndPosition { get; set; }
+
+        /// <summary>
+        /// Gets or sets the event log version.
+        /// </summary>
+        public uint EventLogVersion { get; set; }
 
         /// <summary>
         /// Gets or sets the partition id.

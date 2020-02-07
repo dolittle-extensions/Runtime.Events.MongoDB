@@ -82,7 +82,13 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                     var committedEvents = new List<CommittedAggregateEvent>();
 
                     // TODO: add execution context stuff...
-                    var eventCommitter = new EventCommitter(transaction, _connection.EventLog, new Cause(CauseType.Command, 0), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+                    var eventCommitter = new EventCommitter(
+                        transaction,
+                        _connection.EventLog,
+                        new Cause(CauseType.Command, 0),
+                        Guid.NewGuid(),
+                        Guid.NewGuid(),
+                        Guid.NewGuid());
 
                     foreach (var @event in events)
                     {
@@ -135,20 +141,12 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                 var filter = Builders<Event>.Filter;
 
                 var events = _connection.EventLog
-                    .Find(filter.Eq(_ => _.Aggregate.WasAppliedByAggregate, true) & filter.Eq(_ => _.Aggregate.EventSourceId, eventSource.Value) & filter.Eq(_ => _.Aggregate.TypeId, aggregateRoot.Value) & filter.Lte(_ => _.Aggregate.Version, version.Value))
+                    .Find(filter.Eq(_ => _.Aggregate.WasAppliedByAggregate, true)
+                        & filter.Eq(_ => _.Aggregate.EventSourceId, eventSource.Value)
+                        & filter.Eq(_ => _.Aggregate.TypeId, aggregateRoot.Value)
+                        & filter.Lte(_ => _.Aggregate.Version, version.Value))
                     .Sort(Builders<Event>.Sort.Ascending(_ => _.Aggregate.Version))
-                    .Project(_ => new CommittedAggregateEvent(
-                        _.Aggregate.EventSourceId,
-                        new Artifact(_.Aggregate.TypeId, _.Aggregate.TypeGeneration),
-                        _.Aggregate.Version,
-                        _.EventLogVersion,
-                        _.Metadata.Occurred,
-                        _.Metadata.Correlation,
-                        _.Metadata.Microservice,
-                        _.Metadata.Tenant,
-                        new Cause(_.Metadata.CauseType, _.Metadata.CausePosition),
-                        new Artifact(_.Metadata.TypeId, _.Metadata.TypeGeneration),
-                        _.Content))
+                    .Project(_ => _.ToCommittedAggregateEvent())
                     .ToList();
 
                 return new CommittedAggregateEvents(eventSource, aggregateRoot, version, events);

@@ -37,9 +37,12 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
                 using var session = _connection.MongoClient.StartSession();
                 return await session.WithTransactionAsync(async (transaction, cancel) =>
                 {
-                    var streamPosition = (uint)_connection.StreamEvents.CountDocuments(transaction, Builders<StreamEvent>.Filter.Eq(_ => _.StreamIdAndPosition.StreamId, streamId.Value));
+                    var events = _connection.StreamEvents;
+                    var streamPosition = (uint)events.CountDocuments(
+                        transaction,
+                        Builders<StreamEvent>.Filter.Eq(_ => _.StreamIdAndPosition.StreamId, streamId.Value));
 
-                    await _connection.StreamEvents.InsertOneAsync(
+                    await events.InsertOneAsync(
                         transaction,
                         @event.ToStreamEvent(streamId, streamPosition, partitionId),
                         null,

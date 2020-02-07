@@ -4,6 +4,8 @@
 using System.Threading.Tasks;
 using Dolittle.Logging;
 using Dolittle.Runtime.Events.Processing;
+using Dolittle.Runtime.Events.Store.MongoDB.Streams;
+using MongoDB.Driver;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
 {
@@ -27,15 +29,30 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Processing
         }
 
         /// <inheritdoc/>
-        public Task<CommittedEventWithPartition> Fetch(StreamId streamId, StreamPosition streamPosition)
+        public async Task<CommittedEventWithPartition> Fetch(StreamId streamId, StreamPosition streamPosition)
         {
-            return Task.FromResult<CommittedEventWithPartition>(null);
+            var filterBuilder = Builders<StreamEvent>.Filter;
+            var committedEventWithPartition = await _connection.StreamEvents.Find(
+                filterBuilder.Eq(_ => _.StreamIdAndPosition, new StreamIdAndPosition(streamId, streamPosition)))
+                .Project(_ => _.ToCommittedEventWithPartition(_.PartitionId))
+                .FirstOrDefaultAsync()
+                .ConfigureAwait(false);
+            if (committedEventWithPartition == default) throw new NoEventInStreamAtPosition(streamId, streamPosition);
+            return committedEventWithPartition;
         }
 
         /// <inheritdoc/>
-        public Task<StreamPosition> FindNext(StreamId streamId, PartitionId partitionId, StreamPosition fromPosition)
+        public async Task<StreamPosition> FindNext(StreamId streamId, PartitionId partitionId, StreamPosition fromPosition)
         {
-            return Task.FromResult(StreamPosition.Start);
+            var filterBuilder = Builders<StreamEvent>.Filter;
+            var streamEvent = await _connection.StreamEvents.Find(
+                filterBuilder.Eq(_ => _.StreamIdAndPosition.StreamId, streamId.Value)
+                & filterBuilder.Eq(_ => _.PartitionId, partitionId.Value)
+                & filterBuilder.Gte(_ => _.StreamIdAndPosition.Position, fromPosition.Value))
+                .FirstOrDefaultAsync()
+                .ConfigureAwait(false);
+            if (streamEvent == default) return uint.MaxValue;
+            return streamEvent.StreamIdAndPosition.Position;
         }
     }
 }

@@ -20,13 +20,38 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Streams
         /// <param name="partitionId">The <see cref="PartitionId" />.</param>
         /// <returns>The converted <see cref="StreamEvent" />.</returns>
         public static StreamEvent ToStreamEvent(this CommittedEvent committedEvent, StreamId streamId, StreamPosition streamPosition, PartitionId partitionId) =>
-            new StreamEvent
-            {
-                StreamIdAndPosition = new StreamIdAndPosition { Position = streamPosition, StreamId = streamId.Value },
-                Content = committedEvent.Content,
-                Metadata = committedEvent.GetEventMetadata(),
-                Aggregate = committedEvent.GetAggregateMetadata(),
-                PartitionId = partitionId
-            };
+            new StreamEvent(
+                streamId,
+                streamPosition,
+                committedEvent.EventLogVersion,
+                partitionId,
+                committedEvent.GetEventMetadata(),
+                committedEvent.GetAggregateMetadata(),
+                committedEvent.Content);
+
+        /// <summary>
+        /// Converts the <see cref="StreamEvent" /> to <see cref="CommittedEvent" />.
+        /// </summary>
+        /// <param name="streamEvent">The <see cref="StreamEvent" />.</param>
+        /// <returns>The converted <see cref="CommittedEvent" />.</returns>
+        public static CommittedEvent ToCommittedEvent(this StreamEvent streamEvent) =>
+            new CommittedEvent(
+                streamEvent.EventLogVersion,
+                streamEvent.Metadata.Occurred,
+                streamEvent.Metadata.Correlation,
+                streamEvent.Metadata.Microservice,
+                streamEvent.Metadata.Tenant,
+                new Cause(streamEvent.Metadata.CauseType, streamEvent.Metadata.CausePosition),
+                new Artifacts.Artifact(streamEvent.Metadata.TypeId, streamEvent.Metadata.TypeGeneration),
+                streamEvent.Content);
+
+        /// <summary>
+        /// Converts the <see cref="StreamEvent" /> to <see cref="CommittedEventWithPartition" />.
+        /// </summary>
+        /// <param name="streamEvent">The <see cref="StreamEvent" />.</param>
+        /// <param name="partitionId">The <see cref="PartitionId" />.</param>
+        /// <returns>The converted <see cref="CommittedEventWithPartition" />.</returns>
+        public static CommittedEventWithPartition ToCommittedEventWithPartition(this StreamEvent streamEvent, PartitionId partitionId) =>
+            new CommittedEventWithPartition(streamEvent.ToCommittedEvent(), partitionId);
     }
 }
