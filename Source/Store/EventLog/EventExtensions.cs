@@ -28,7 +28,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.EventLog
                 @event.Metadata.Tenant,
                 new Cause(@event.Metadata.CauseType, @event.Metadata.CausePosition),
                 new Artifact(@event.Metadata.TypeId, @event.Metadata.TypeGeneration),
-                @event.Content);
+                @event.Content.ToString());
 
         /// <summary>
         /// Converts a <see cref="Event" /> to <see cref="CommittedEvent" />.
@@ -44,7 +44,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.EventLog
                 @event.Metadata.Tenant,
                 new Cause(@event.Metadata.CauseType, @event.Metadata.CausePosition),
                 new Artifact(@event.Metadata.TypeId, @event.Metadata.TypeGeneration),
-                @event.Content);
+                @event.Content.ToString());
 
         /// <summary>
         /// Converts a <see cref="Event" /> to <see cref="CommittedEventWithPartition" />.

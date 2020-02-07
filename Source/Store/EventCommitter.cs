@@ -7,6 +7,7 @@ using Dolittle.Artifacts;
 using Dolittle.Execution;
 using Dolittle.Runtime.Events.Store.MongoDB.EventLog;
 using Dolittle.Tenancy;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB
@@ -134,7 +135,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
                         TypeGeneration = @event.Type.Generation,
                     },
                     Aggregate = aggregate,
-                    Content = @event.Content,
+                    Content = BsonDocument.Parse(@event.Content),
                 });
                 return true;
             }

@@ -3,6 +3,7 @@
 
 using System;
 using Dolittle.Runtime.Events.Store.MongoDB.EventLog;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB.Streams
@@ -36,7 +37,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Streams
             PartitionId = partitionId;
             Metadata = metadata;
             Aggregate = aggregate;
-            Content = content;
+            Content = BsonDocument.Parse(content);
         }
 
         /// <summary>
@@ -68,6 +69,6 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Streams
         /// <summary>
         /// Gets or sets the domain specific event data.
         /// </summary>
-        public string Content { get; set; }
+        public BsonDocument Content { get; set; }
     }
 }

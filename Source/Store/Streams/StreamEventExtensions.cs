@@ -43,7 +43,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.Streams
                 streamEvent.Metadata.Tenant,
                 new Cause(streamEvent.Metadata.CauseType, streamEvent.Metadata.CausePosition),
                 new Artifacts.Artifact(streamEvent.Metadata.TypeId, streamEvent.Metadata.TypeGeneration),
-                streamEvent.Content);
+                streamEvent.Content.ToString());
 
         /// <summary>
         /// Converts the <see cref="StreamEvent" /> to <see cref="CommittedEventWithPartition" />.

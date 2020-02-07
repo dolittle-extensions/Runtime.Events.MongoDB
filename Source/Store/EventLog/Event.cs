@@ -1,6 +1,7 @@
 // Copyright (c) Dolittle. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Dolittle.Runtime.Events.Store.MongoDB.EventLog
@@ -29,6 +30,6 @@ namespace Dolittle.Runtime.Events.Store.MongoDB.EventLog
         /// <summary>
         /// Gets or sets the domain specific event data.
         /// </summary>
-        public string Content { get; set; }
+        public BsonDocument Content { get; set; }
     }
 }
