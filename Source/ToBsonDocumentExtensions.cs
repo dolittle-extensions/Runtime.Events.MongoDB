@@ -144,16 +144,13 @@ namespace Dolittle.Runtime.Events.MongoDB
         /// <returns>A <see cref="BsonDocument" /> representation of the <see cref="OriginalContext"/></returns>
         public static BsonDocument AsBson(this OriginalContext originalContext)
         {
-            var claims = new BsonArray();
-            claims.AddRange(originalContext.Claims.Select(_ => _.ToBsonDocument()));
-
             return new BsonDocument( new Dictionary<string,object>
             {
                 { EventConstants.APPLICATION, originalContext.Application.Value },
                 { EventConstants.BOUNDED_CONTEXT, originalContext.BoundedContext.Value },
                 { EventConstants.TENANT, originalContext.Tenant.Value },
                 { EventConstants.ENVIRONMENT, originalContext.Environment.Value },
-                { EventConstants.CLAIMS, claims }
+                { EventConstants.CLAIMS, new BsonArray() } //don't store the claims
             });
         }
     }

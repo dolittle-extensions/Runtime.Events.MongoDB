@@ -101,7 +101,7 @@ namespace Dolittle.Runtime.Events.MongoDB
                 var boundedContext = doc[EventConstants.BOUNDED_CONTEXT].AsGuid;
                 var tenant = doc[EventConstants.TENANT].AsGuid;
                 var environment = doc[EventConstants.ENVIRONMENT].AsString;
-                var claims = doc[EventConstants.CLAIMS].AsBsonArray.ToClaims();
+                var claims = Claims.Empty; //don't store or return claims
                 return new OriginalContext(application,boundedContext,tenant,environment,claims);
             }
             catch(Exception)
@@ -109,30 +109,6 @@ namespace Dolittle.Runtime.Events.MongoDB
                 Console.WriteLine(value.ToJson());
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Converts a <see cref="BsonArray" /> into <see cref="Claims" />
-        /// </summary>
-        /// <param name="array">The <see cref="BsonArray" /> that is the source</param>
-        /// <returns><see cref="Claims" /> with the values from the <see cref="BsonArray" /></returns>
-        public static Claims ToClaims(this BsonArray array)
-        {
-            return new Claims(array.Select(_ => _.ToClaim()).ToList());
-        }
-
-        /// <summary>
-        /// Converts a <see cref="BsonValue" /> into a <see cref="Claim" />
-        /// </summary>
-        /// <param name="value">The <see cref="BsonValue" /> that is the source</param>
-        /// <returns><see cref="Claim" /> with the values from the <see cref="BsonValue" /></returns>
-        public static Claim ToClaim(this BsonValue value)
-        {
-            var doc = value.AsBsonDocument;
-            var name = doc[EventConstants.CLAIM_NAME].AsString;
-            var val = doc[EventConstants.CLAIM_VALUE].AsString;
-            var valueType = doc[EventConstants.CLAIM_VALUE_TYPE].AsString;
-            return new Claim(name, val, valueType);
         }
     }
 }
