@@ -1,97 +1,92 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Dolittle. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- * --------------------------------------------------------------------------------------------*/
- 
+// Copyright (c) Dolittle. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dolittle.Applications;
-using Dolittle.Collections;
 using Dolittle.PropertyBags;
 using Dolittle.Runtime.Events.Store;
-using Dolittle.Runtime.Events;
-using MongoDB.Bson;
 using Dolittle.Security;
+using MongoDB.Bson;
 
 namespace Dolittle.Runtime.Events.MongoDB
 {
-
     /// <summary>
-    /// Extensions to convert <see cref="BsonValue">Bson Values</see> into domain specific types and dotnet types
+    /// Extensions to convert <see cref="BsonValue">Bson Values</see> into domain specific types and dotnet types.
     /// </summary>
-    public static class BsonValueExtensions 
+    public static class BsonValueExtensions
     {
         /// <summary>
-        /// Converts a <see cref="BsonValue" /> into a <see cref="DateTimeOffset" />
+        /// Converts a <see cref="BsonValue" /> into a <see cref="DateTimeOffset" />.
         /// </summary>
-        /// <param name="value">The <see cref="BsonValue" /></param>
-        /// <returns>The corresponding <see cref="DateTimeOffset" /></returns>
+        /// <param name="value">The <see cref="BsonValue" />.</param>
+        /// <returns>The corresponding <see cref="DateTimeOffset" />.</returns>
         public static DateTimeOffset AsDateTimeOffset(this BsonValue value)
         {
             return DateTimeOffset.FromUnixTimeMilliseconds(value.AsInt64);
         }
 
         /// <summary>
-        /// Converts a <see cref="BsonValue" /> into a <see cref="CommitId" />
+        /// Converts a <see cref="BsonValue" /> into a <see cref="CommitId" />.
         /// </summary>
-        /// <param name="value">The <see cref="BsonValue" /></param>
-        /// <returns>The corresponding <see cref="CommitId" /></returns>
+        /// <param name="value">The <see cref="BsonValue" />.</param>
+        /// <returns>The corresponding <see cref="CommitId" />.</returns>
         public static CommitId ToCommitId(this BsonValue value)
         {
             return value.AsGuid;
         }
 
         /// <summary>
-        /// Converts a <see cref="BsonValue" /> into a <see cref="UInt64" />
+        /// Converts a <see cref="BsonValue" /> into a <see cref="ulong" />.
         /// </summary>
-        /// <param name="value">The <see cref="BsonValue" /></param>
-        /// <returns>The corresponding <see cref="UInt64" /></returns>
+        /// <param name="value">The <see cref="BsonValue" />.</param>
+        /// <returns>The corresponding <see cref="ulong" />.</returns>
         public static ulong ToUlong(this BsonValue value)
         {
             return Convert.ToUInt64(value.ToDouble());
         }
 
         /// <summary>
-        /// Converts a <see cref="BsonValue" /> into a <see cref="UInt32" />
+        /// Converts a <see cref="BsonValue" /> into a <see cref="uint" />.
         /// </summary>
-        /// <param name="value">The <see cref="BsonValue" /></param>
-        /// <returns>The corresponding <see cref="UInt32" /></returns>
+        /// <param name="value">The <see cref="BsonValue" />.</param>
+        /// <returns>The corresponding <see cref="uint" />.</returns>
         public static uint ToUint(this BsonValue value)
         {
             return Convert.ToUInt32(value.ToInt64());
         }
 
         /// <summary>
-        /// Converts a <see cref="BsonValue" /> into an <see cref="EventStream" />
+        /// Converts a <see cref="BsonValue" /> into an <see cref="EventStream" />.
         /// </summary>
-        /// <param name="value">The <see cref="BsonValue" /></param>
-        /// <returns>The corresponding <see cref="EventStream" /></returns>
+        /// <param name="value">The <see cref="BsonValue" />.</param>
+        /// <returns>The corresponding <see cref="EventStream" />.</returns>
         public static EventStream ToEventStream(this BsonValue value)
         {
             var list = new List<EventEnvelope>();
-            foreach(var val in value.AsBsonArray)
+            foreach (var val in value.AsBsonArray)
             {
                 list.Add(val.AsBsonDocument.ToEventEnvelope());
             }
+
             return new EventStream(list);
         }
 
         /// <summary>
-        /// Converts a <see cref="BsonValue" /> into a <see cref="PropertyBag" />
+        /// Converts a <see cref="BsonValue" /> into a <see cref="PropertyBag" />.
         /// </summary>
-        /// <param name="value">The <see cref="BsonValue" /></param>
-        /// <returns>The corresponding <see cref="PropertyBag" /></returns>        
+        /// <param name="value">The <see cref="BsonValue" />.</param>
+        /// <returns>The corresponding <see cref="PropertyBag" />.</returns>
         public static PropertyBag ToPropertyBag(this BsonValue value)
         {
             return PropertyBagBsonSerializer.Deserialize(value.AsBsonDocument);
         }
 
         /// <summary>
-        /// Converts a <see cref="BsonValue" /> into an <see cref="OriginalContext" />
+        /// Converts a <see cref="BsonValue" /> into an <see cref="OriginalContext" />.
         /// </summary>
-        /// <param name="value">The <see cref="BsonValue" /> that is the source</param>
-        /// <returns>An <see cref="OriginalContext" /> with the values from the <see cref="BsonValue" /></returns>
+        /// <param name="value">The <see cref="BsonValue" /> that is the source.</param>
+        /// <returns>An <see cref="OriginalContext" /> with the values from the <see cref="BsonValue" />.</returns>
         public static OriginalContext ToOriginalContext(this BsonValue value)
         {
             try
@@ -104,7 +99,7 @@ namespace Dolittle.Runtime.Events.MongoDB
                 var claims = Claims.Empty; //don't store or return claims
                 return new OriginalContext(application,boundedContext,tenant,environment,claims);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 Console.WriteLine(value.ToJson());
                 throw;

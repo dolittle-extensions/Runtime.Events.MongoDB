@@ -1,23 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../default.props" />
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Dolittle.Runtime.Events.MongoDB</AssemblyName>
     <RootNamespace>Dolittle.Runtime.Events.MongoDB</RootNamespace>
   </PropertyGroup>
 
-  <Import Project="../Build/MSBuild/default.props"></Import>
-
   <ItemGroup>
-    <PackageReference  Include="Dolittle.Runtime.Events" Version="3.*" />
-    <PackageReference  Include="Dolittle.ResourceTypes.Configuration" Version="3.*" />
-    <PackageReference  Include="Dolittle.Concepts" Version="3.*" />
-    <PackageReference  Include="Dolittle.PropertyBags" Version="3.*" />
-    <PackageReference  Include="Dolittle.Concepts" Version="3.*" />
-    <PackageReference  Include="Dolittle.Time" Version="3.*" />
-    <PackageReference  Include="Dolittle.Artifacts" Version="3.*" />
-  </ItemGroup>
-  <ItemGroup>
+    <PackageReference Include="Dolittle.Runtime.Events" Version="4.*" />
+    <PackageReference Include="Dolittle.ResourceTypes.Configuration" Version="4.*" />
+    <PackageReference Include="Dolittle.Concepts" Version="4.*" />
+    <PackageReference Include="Dolittle.PropertyBags" Version="4.*" />
+    <PackageReference Include="Dolittle.Concepts" Version="4.*" />
+    <PackageReference Include="Dolittle.Time" Version="4.*" />
+    <PackageReference Include="Dolittle.Artifacts" Version="4.*" />
     <PackageReference Include="MongoDB.Bson" Version="2.7.0"/>
     <PackageReference Include="MongoDB.Driver" Version="2.7.0"/>
     <PackageReference Include="MongoDB.Driver.Core" Version="2.7.0"/>

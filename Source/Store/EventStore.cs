@@ -1,14 +1,10 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Dolittle. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- * --------------------------------------------------------------------------------------------*/
-
+// Copyright (c) Dolittle. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dolittle.Artifacts;
-using Dolittle.Events;
 using Dolittle.Logging;
 using Dolittle.Runtime.Events.MongoDB;
 using MongoDB.Bson;
@@ -17,19 +13,19 @@ using MongoDB.Driver;
 namespace Dolittle.Runtime.Events.Store.MongoDB
 {
     /// <summary>
-    /// MongoDB implementation of <see cref="IEventStore" />
+    /// Represents the MongoDB implementation of <see cref="IEventStore" />.
     /// </summary>
     public class EventStore : IEventStore
     {
-        object lock_object = new object();
         readonly EventStoreMongoDBConfiguration _config;
         readonly ILogger _logger;
+        bool _disposed;
 
         /// <summary>
-        /// Instantiates an instance of the EventStore
+        /// Initializes a new instance of the <see cref="EventStore"/> class.
         /// </summary>
-        /// <param name="config">A mongodb instance with associated configuration</param>
-        /// <param name="logger">An <see cref="ILogger"/> instance to log significant events</param>
+        /// <param name="config">A mongodb instance with associated configuration.</param>
+        /// <param name="logger">An <see cref="ILogger"/> instance to log significant events.</param>
         public EventStore(EventStoreMongoDBConfiguration config, ILogger logger)
         {
             _config = config;
@@ -40,30 +36,39 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         public CommittedEventStream Commit(UncommittedEventStream uncommittedEvents)
         {
             var commit = uncommittedEvents.AsBsonCommit();
-            return Do<CommittedEventStream>(() => {
+            return Do(() =>
+            {
                 try
                 {
                     var result = ExecuteCommit(commit);
-                    if(result.IsSuccessfulCommit()){
-                        var sequence_number =  result[Constants.ID].ToUlong();
-                        var committed = uncommittedEvents.ToCommitted(sequence_number);
-                        return committed;
-                    } else if(result.IsKnownError()){
-                        if(result.IsPreviousVersion()){
-                            throw new EventSourceConcurrencyConflict($"Current Version is {result["version"]}, tried to commit {uncommittedEvents.Source.Version.Commit}");
-                        }
-                        else if(IsDuplicateCommit(uncommittedEvents.Id)){
-                            throw new CommitIsADuplicate();
-                        } else {
-                            throw new EventSourceConcurrencyConflict();
-                        }
-                    } else {
-                        throw new Exception($"Unknown error type: {result?.ToString() ?? "[NULL]"}");
+                    if (result.IsSuccessfulCommit())
+                    {
+                        var sequence_number = result[Constants.ID].ToUlong();
+                        return uncommittedEvents.ToCommitted(sequence_number);
                     }
-                } 
-                catch(Exception ex)
+                    else if (result.IsKnownError())
+                    {
+                        if (result.IsPreviousVersion())
+                        {
+                            throw new EventSourceConcurrencyConflict(result.ToEventSourceVersion(), uncommittedEvents.Source.Version);
+                        }
+                        else if (IsDuplicateCommit(uncommittedEvents.Id))
+                        {
+                            throw new CommitIsADuplicate();
+                        }
+                        else
+                        {
+                            throw new EventSourceConcurrencyConflict(result[Constants.ERROR].AsBsonDocument.ToEventSourceVersion(), uncommittedEvents.Source.Version);
+                        }
+                    }
+                    else
+                    {
+                        throw new UnknownCommitError(result?.ToString() ?? "[NULL]");
+                    }
+                }
+                catch (Exception ex)
                 {
-                    _logger.Error(ex,"Exception committing event stream");
+                    _logger.Error(ex, "Exception committing event stream");
                     throw;
                 }
             });
@@ -72,7 +77,7 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
         /// <inheritdoc />
         public Commits Fetch(EventSourceKey eventSourceKey)
         {
-           return FindCommitsWithSorting(eventSourceKey.ToFilter()); 
+            return FindCommitsWithSorting(eventSourceKey.ToFilter());
         }
 
         /// <inheritdoc />
@@ -87,111 +92,10 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             return FindCommitsWithSorting(commit.ToFilter());
         }
 
-        VersionedEventSource GetVersionFromCommits(EventSourceKey eventSource)
-        {
-            var builder = Builders<BsonDocument>.Sort;
-            var sort = builder.Ascending(Constants.VERSION);
-            var commitDoc = _config.Commits.Find(eventSource.ToFilter()).Sort(sort).Limit(1).ToList().SingleOrDefault();
-            if(commitDoc == null)
-                return new VersionedEventSource(EventSourceVersion.NoVersion,eventSource);
-
-            return commitDoc.ToCommittedEventStream().Source;
-        }
-        bool IsDuplicateCommit(CommitId commit)
-        {
-            var doc = _config.Commits.Find(commit.ToFilter()).SingleOrDefault();
-            return doc != null;
-        }
-        BsonDocument ExecuteCommit(BsonDocument commit)
-        {
-            var result = _config.Commits.Database.Eval(EventStoreMongoDBConfiguration.UpdateJSCommand, new BsonValue[]{ commit });
-            
-            if(result == null)
-                throw new Exception("The error response is not in the format of a Bson Document.  Cannot process."); //use custom exception
-            return result.AsBsonDocument;
-        }
-
-        #region IDisposable Support
-        /// <summary>
-        /// Disposed flag to detect redundant calls
-        /// </summary>
-        protected bool disposedValue = false; 
-
-        /// <summary>
-        /// Disposes of managed and unmanaged resources
-        /// </summary>
-        /// <param name="disposing"></param>
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects).
-                }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
-                disposedValue = true;
-            }
-        }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~EventStore() {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
-        // This code added to correctly implement the disposable pattern.
-
-        /// <summary>
-        /// Disposes of the EventStore
-        /// </summary>
+        /// <inheritdoc/>
         public void Dispose()
         {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
-        }
-        #endregion
-
-        /// <summary>
-        /// Helper function to perform an action and return the results
-        /// </summary>
-        /// <param name="callback">Action to be performed</param>
-        /// <typeparam name="T">The type of the return value</typeparam>
-        /// <returns>Instance of T</returns>
-        protected virtual T Do<T>(Func<T> callback)
-        {
-            T results = default(T);
-            Do(() => { results = callback(); });
-            return results;
-        }
-
-        /// <summary>
-        /// Wraps up calling the MongoDB to deal with common error scenarios.
-        /// </summary>
-        /// <param name="callback"></param>
-        protected virtual void Do(Action callback)
-        {
-            if (disposedValue)
-            {
-                throw new ObjectDisposedException("Attempt to use storage after it has been disposed.");
-            }
-            try
-            {
-                callback();
-            }
-            catch (MongoConnectionException e)
-            {
-                throw new EventStoreUnavailable(e.Message, e);
-            }
-            catch (MongoException e)
-            {
-                throw new EventStorePersistenceError(e.Message, e);
-            }
+            _disposed = true;
         }
 
         /// <inheritdoc />
@@ -214,10 +118,10 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             var builder = Builders<BsonDocument>.Sort;
             var filter = eventSource.ToFilter();
             var sort = builder.Descending(VersionConstants.COMMIT);
-            var version = _config.Commits.Find<BsonDocument>(filter).Sort(sort).Limit(1).FirstOrDefault();
-            if(version == null)
+            var version = _config.Commits.Find(filter).Sort(sort).Limit(1).FirstOrDefault();
+            if (version == null)
                 return EventSourceVersion.NoVersion;
-            
+
             return version.ToEventSourceVersion();
         }
 
@@ -227,27 +131,84 @@ namespace Dolittle.Runtime.Events.Store.MongoDB
             return GetCurrentVersionFor(eventSource).NextCommit();
         }
 
+        /// <summary>
+        /// Helper function to perform an action and return the results.
+        /// </summary>
+        /// <param name="callback">Action to be performed.</param>
+        /// <typeparam name="T">The type of the return value.</typeparam>
+        /// <returns>Instance of T.</returns>
+        protected virtual T Do<T>(Func<T> callback)
+        {
+            T results = default;
+            Do(() => { results = callback(); });
+            return results;
+        }
+
+        /// <summary>
+        /// Wraps up calling the MongoDB to deal with common error scenarios.
+        /// </summary>
+        /// <param name="callback">Action to be performed.</param>
+        protected virtual void Do(Action callback)
+        {
+            if (_disposed)
+            {
+#pragma warning disable DL0008
+                throw new ObjectDisposedException("Attempt to use storage after it has been disposed.");
+#pragma warning restore DL0008
+            }
+
+            try
+            {
+                callback();
+            }
+            catch (MongoConnectionException e)
+            {
+                throw new EventStoreUnavailable(e.Message, e);
+            }
+            catch (MongoException e)
+            {
+                throw new EventStorePersistenceError(e.Message, e);
+            }
+        }
+
+        bool IsDuplicateCommit(CommitId commit)
+        {
+            var doc = _config.Commits.Find(commit.ToFilter()).SingleOrDefault();
+            return doc != null;
+        }
+
+        BsonDocument ExecuteCommit(BsonDocument commit)
+        {
+            var result = _config.Commits.Database.Eval(EventStoreMongoDBConfiguration.UpdateJSCommand, new BsonValue[] { commit });
+
+            if (result == null)
+                throw new InvalidCommitResponse(commit);
+
+            return result.AsBsonDocument;
+        }
+
         Commits FindCommitsWithSorting(FilterDefinition<BsonDocument> filter)
         {
             var builder = Builders<BsonDocument>.Sort;
             var sort = builder.Ascending(Constants.VERSION);
             var docs = _config.Commits.Find(filter).Sort(sort).ToList();
             var commits = new List<CommittedEventStream>();
-            foreach(var doc in docs)
+            foreach (var doc in docs)
             {
                 commits.Add(doc.ToCommittedEventStream());
-            } 
-            return new Commits(commits);
-        } 
+            }
 
+            return new Commits(commits);
+        }
 
         SingleEventTypeEventStream GetEventsFromCommits(IEnumerable<CommittedEventStream> commits, ArtifactId eventType)
         {
             var events = new List<CommittedEventEnvelope>();
-            foreach(var commit in commits)
+            foreach (var commit in commits)
             {
-                events.AddRange(commit.Events.FilteredByEventType(eventType).Select(e => new CommittedEventEnvelope(commit.Sequence,e.Metadata,e.Event)));
+                events.AddRange(commit.Events.FilteredByEventType(eventType).Select(e => new CommittedEventEnvelope(commit.Sequence, e.Metadata, e.Event)));
             }
+
             return new SingleEventTypeEventStream(events);
         }
     }

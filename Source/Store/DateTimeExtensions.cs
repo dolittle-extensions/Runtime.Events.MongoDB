@@ -1,25 +1,23 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Dolittle. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- * --------------------------------------------------------------------------------------------*/
+// Copyright (c) Dolittle. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
-using System.Linq;
 
 namespace EventStore.MongoDB
 {
     /// <summary>
-    /// Extends DateTime
+    /// Extends DateTime.
     /// </summary>
-    public static class DateTimeExtensions 
+    public static class DateTimeExtensions
     {
         /// <summary>
-        /// Converts a nullable DateTime into its DateTimeOffset equivalent
+        /// Converts a nullable DateTime into its DateTimeOffset equivalent.
         /// </summary>
-        /// <param name="date">The DateTime to convert</param>
-        /// <returns>A DateTimeOffset equivalent if it has a value, otherwise DateTimeOffset.MinValue</returns>
+        /// <param name="date">The DateTime to convert.</param>
+        /// <returns>A DateTimeOffset equivalent if it has a value, otherwise DateTimeOffset.MinValue.</returns>
         public static DateTimeOffset ToDateTimeOffset(this DateTime? date)
         {
-            return date.HasValue ? date.Value : DateTimeOffset.MinValue;
+            return date ?? DateTimeOffset.MinValue;
         }
     }
 }
