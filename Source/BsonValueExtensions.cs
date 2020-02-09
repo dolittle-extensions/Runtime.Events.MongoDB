@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Dolittle.PropertyBags;
 using Dolittle.Runtime.Events.Store;
 using Dolittle.Security;
@@ -96,8 +95,8 @@ namespace Dolittle.Runtime.Events.MongoDB
                 var boundedContext = doc[EventConstants.BOUNDED_CONTEXT].AsGuid;
                 var tenant = doc[EventConstants.TENANT].AsGuid;
                 var environment = doc[EventConstants.ENVIRONMENT].AsString;
-                var claims = Claims.Empty; //don't store or return claims
-                return new OriginalContext(application,boundedContext,tenant,environment,claims);
+                var claims = Claims.Empty;
+                return new OriginalContext(application, boundedContext, tenant, environment, claims);
             }
             catch (Exception)
             {

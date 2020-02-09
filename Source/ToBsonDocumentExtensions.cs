@@ -138,7 +138,7 @@ namespace Dolittle.Runtime.Events.MongoDB
                 { EventConstants.BOUNDED_CONTEXT, originalContext.BoundedContext.Value },
                 { EventConstants.TENANT, originalContext.Tenant.Value },
                 { EventConstants.ENVIRONMENT, originalContext.Environment.Value },
-                { EventConstants.CLAIMS, new BsonArray() } //don't store the claims
+                { EventConstants.CLAIMS, new BsonArray() }
             });
         }
     }
